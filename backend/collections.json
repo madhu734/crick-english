@@ -1,0 +1,762 @@
+[
+  {
+    "id": "ce0000000000001",
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "ce_staff",
+    "type": "auth",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "help": "",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "cost": 0,
+        "help": "",
+        "hidden": true,
+        "id": "password901924565",
+        "max": 0,
+        "min": 8,
+        "name": "password",
+        "pattern": "",
+        "presentable": false,
+        "required": true,
+        "system": true,
+        "type": "password"
+      },
+      {
+        "autogeneratePattern": "[a-zA-Z0-9]{50}",
+        "help": "",
+        "hidden": true,
+        "id": "text2504183744",
+        "max": 60,
+        "min": 30,
+        "name": "tokenKey",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "exceptDomains": [],
+        "help": "",
+        "hidden": false,
+        "id": "email3885137012",
+        "name": "email",
+        "onlyDomains": [],
+        "presentable": false,
+        "required": true,
+        "system": true,
+        "type": "email"
+      },
+      {
+        "help": "",
+        "hidden": false,
+        "id": "bool1547992806",
+        "name": "emailVisibility",
+        "presentable": false,
+        "required": false,
+        "system": true,
+        "type": "bool"
+      },
+      {
+        "help": "",
+        "hidden": false,
+        "id": "bool256245529",
+        "name": "verified",
+        "presentable": false,
+        "required": false,
+        "system": true,
+        "type": "bool"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "max": 100,
+        "required": true
+      },
+      {
+        "name": "role",
+        "type": "select",
+        "maxSelect": 1,
+        "values": [
+          "admin",
+          "scorer"
+        ],
+        "required": true
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX `idx_tokenKey_1gv3xw0oej` ON `` (`tokenKey`)",
+      "CREATE UNIQUE INDEX `idx_email_1gv3xw0oej` ON `` (`email`) WHERE `email` != ''"
+    ],
+    "created": "",
+    "updated": "",
+    "system": false,
+    "authRule": "role = \"admin\" || role = \"scorer\"",
+    "manageRule": null,
+    "authAlert": {
+      "enabled": true,
+      "emailTemplate": {
+        "subject": "Login from a new location",
+        "body": "<p>Hello,</p>\n<p>We noticed a login to your {APP_NAME} account from a new location:</p>\n<p><em>{ALERT_INFO}</em></p>\n<p><strong>If this wasn't you, you should immediately change your {APP_NAME} account password to revoke access from all other locations.</strong></p>\n<p>If this was you, you may disregard this email.</p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
+      }
+    },
+    "oauth2": {
+      "providers": [],
+      "mappedFields": {
+        "id": "",
+        "name": "",
+        "username": "",
+        "avatarURL": ""
+      },
+      "enabled": false
+    },
+    "passwordAuth": {
+      "enabled": true,
+      "identityFields": [
+        "email"
+      ]
+    },
+    "mfa": {
+      "enabled": false,
+      "duration": 600,
+      "rule": ""
+    },
+    "otp": {
+      "enabled": false,
+      "duration": 180,
+      "length": 8,
+      "emailTemplate": {
+        "subject": "OTP for {APP_NAME}",
+        "body": "<p>Hello,</p>\n<p>Your one-time password is: <strong>{OTP}</strong></p>\n<p><i>If you didn't ask for the one-time password, you can ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
+      }
+    },
+    "verificationTemplate": {
+      "subject": "Verify your {APP_NAME} email",
+      "body": "<p>Hello,</p>\n<p>Thank you for joining us at {APP_NAME}.</p>\n<p>Click on the button below to verify your email address.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-verification/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Verify</a>\n</p>\n<p><i>If you didn't recently register, please ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
+    },
+    "resetPasswordTemplate": {
+      "subject": "Reset your {APP_NAME} password",
+      "body": "<p>Hello,</p>\n<p>Click on the button below to reset your password.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-password-reset/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Reset password</a>\n</p>\n<p><i>If you didn't ask to reset your password, please ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
+    },
+    "confirmEmailChangeTemplate": {
+      "subject": "Confirm your {APP_NAME} new email address",
+      "body": "<p>Hello,</p>\n<p>Click on the button below to confirm your new email address.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-email-change/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Confirm new email</a>\n</p>\n<p><i>If you didn't ask to change your email address, please ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>"
+    }
+  },
+  {
+    "id": "ce0000000000002",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\"",
+    "updateRule": "@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\"",
+    "deleteRule": null,
+    "name": "ce_seasons",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "help": "",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "name": "number",
+        "type": "number",
+        "onlyInt": true,
+        "min": 1,
+        "max": 999
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "max": 60,
+        "required": true
+      },
+      {
+        "name": "active",
+        "type": "bool"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_ce_seasons ON ce_seasons (number)"
+    ],
+    "created": "",
+    "updated": "",
+    "system": false
+  },
+  {
+    "id": "ce0000000000003",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\"",
+    "updateRule": "@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\"",
+    "deleteRule": null,
+    "name": "ce_teams",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "help": "",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "name": "season",
+        "type": "relation",
+        "collectionId": "ce0000000000002",
+        "maxSelect": 1,
+        "required": true,
+        "cascadeDelete": false
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "max": 100,
+        "required": true
+      },
+      {
+        "name": "short_name",
+        "type": "text",
+        "max": 8,
+        "required": true
+      },
+      {
+        "name": "group_name",
+        "type": "text",
+        "max": 40,
+        "required": false
+      },
+      {
+        "name": "color",
+        "type": "text",
+        "max": 7,
+        "required": false
+      },
+      {
+        "name": "logo",
+        "type": "file",
+        "maxSelect": 1,
+        "maxSize": 3145728,
+        "mimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/avif"
+        ]
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_ce_teams ON ce_teams (season, name)"
+    ],
+    "created": "",
+    "updated": "",
+    "system": false
+  },
+  {
+    "id": "ce0000000000004",
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\"",
+    "updateRule": "@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\"",
+    "deleteRule": null,
+    "name": "ce_players",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "help": "",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "max": 100,
+        "required": true
+      },
+      {
+        "name": "batch",
+        "type": "text",
+        "max": 40,
+        "required": false
+      },
+      {
+        "help": "",
+        "hidden": false,
+        "id": "select2865161986",
+        "maxSelect": 1,
+        "name": "role",
+        "presentable": false,
+        "required": true,
+        "system": false,
+        "type": "select",
+        "values": [
+          "Bowler",
+          "Batsman",
+          "All-rounder",
+          "Wicketkeeper"
+        ]
+      },
+      {
+        "name": "photo",
+        "type": "file",
+        "maxSelect": 1,
+        "maxSize": 3145728,
+        "mimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/avif"
+        ]
+      },
+      {
+        "cascadeDelete": false,
+        "collectionId": "ce0000000000003",
+        "help": "",
+        "hidden": false,
+        "id": "relation3303056927",
+        "maxSelect": 1,
+        "minSelect": 0,
+        "name": "team",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "relation"
+      }
+    ],
+    "indexes": [],
+    "created": "",
+    "updated": "",
+    "system": false
+  },
+  {
+    "id": "ce0000000000006",
+    "listRule": "(published = true) || (@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\")",
+    "viewRule": "(published = true) || (@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\")",
+    "createRule": "(@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\") && @request.body.status = \"scheduled\" && @request.body.scoring:isset = false && @request.body.score_token:isset = false && @request.body.score_parent:isset = false && @request.body.scorecard:isset = false && @request.body.winner:isset = false",
+    "updateRule": "(@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\") && (((@request.body.scoring:isset = false && @request.body.score_token:isset = false && @request.body.score_parent:isset = false && @request.body.scorecard:isset = false && @request.body.status:isset = false && @request.body.winner:isset = false) && (score_token = \"\" || (@request.body.team_a:isset = false && @request.body.team_b:isset = false && @request.body.overs:isset = false && @request.body.season:isset = false && @request.body.stage:isset = false))) || (@request.body.score_token:isset = true && @request.body.score_token != \"\" && @request.body.score_token != score_token && @request.body.score_parent:isset = true && @request.body.score_parent = score_token && @request.body.scoring:isset = true && @request.body.scorecard:isset = true && @request.body.status:isset = true && @request.body.team_a:isset = false && @request.body.team_b:isset = false && @request.body.overs:isset = false && @request.body.season:isset = false && @request.body.stage:isset = false))",
+    "deleteRule": null,
+    "name": "ce_matches",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "help": "",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "name": "season",
+        "type": "relation",
+        "collectionId": "ce0000000000002",
+        "maxSelect": 1,
+        "required": true,
+        "cascadeDelete": false
+      },
+      {
+        "name": "team_a",
+        "type": "relation",
+        "collectionId": "ce0000000000003",
+        "maxSelect": 1,
+        "required": true,
+        "cascadeDelete": false
+      },
+      {
+        "name": "team_b",
+        "type": "relation",
+        "collectionId": "ce0000000000003",
+        "maxSelect": 1,
+        "required": true,
+        "cascadeDelete": false
+      },
+      {
+        "name": "starts_at",
+        "type": "date",
+        "required": true
+      },
+      {
+        "name": "venue",
+        "type": "text",
+        "max": 100,
+        "required": false
+      },
+      {
+        "name": "stage",
+        "type": "select",
+        "maxSelect": 1,
+        "values": [
+          "league",
+          "group",
+          "semifinal",
+          "final",
+          "friendly"
+        ],
+        "required": true
+      },
+      {
+        "name": "overs",
+        "type": "number",
+        "onlyInt": true,
+        "min": 1,
+        "max": 50
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "maxSelect": 1,
+        "values": [
+          "scheduled",
+          "live",
+          "completed",
+          "abandoned"
+        ],
+        "required": true
+      },
+      {
+        "name": "published",
+        "type": "bool"
+      },
+      {
+        "name": "winner",
+        "type": "relation",
+        "collectionId": "ce0000000000003",
+        "maxSelect": 1,
+        "required": false,
+        "cascadeDelete": false
+      },
+      {
+        "name": "scorecard",
+        "type": "json"
+      },
+      {
+        "name": "updated",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": true
+      },
+      {
+        "help": "",
+        "hidden": false,
+        "id": "json2071372490",
+        "maxSize": 524288,
+        "name": "scoring",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "autogeneratePattern": "",
+        "help": "",
+        "hidden": false,
+        "id": "text3866848691",
+        "max": 36,
+        "min": 0,
+        "name": "score_token",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "help": "",
+        "hidden": false,
+        "id": "text3730057105",
+        "max": 36,
+        "min": 0,
+        "name": "score_parent",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_ce_match_season ON ce_matches (season, starts_at)"
+    ],
+    "created": "",
+    "updated": "",
+    "system": false
+  },
+  {
+    "id": "ce0000000000007",
+    "listRule": "(match.published = true && match.status = \"completed\") || (@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\")",
+    "viewRule": "(match.published = true && match.status = \"completed\") || (@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\")",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "ce_player_match_stats",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "help": "",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "name": "match",
+        "type": "relation",
+        "collectionId": "ce0000000000006",
+        "maxSelect": 1,
+        "required": true,
+        "cascadeDelete": false
+      },
+      {
+        "name": "player",
+        "type": "relation",
+        "collectionId": "ce0000000000004",
+        "maxSelect": 1,
+        "required": true,
+        "cascadeDelete": false
+      },
+      {
+        "name": "team",
+        "type": "relation",
+        "collectionId": "ce0000000000003",
+        "maxSelect": 1,
+        "required": true,
+        "cascadeDelete": false
+      },
+      {
+        "name": "runs",
+        "type": "number",
+        "onlyInt": true,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "balls_faced",
+        "type": "number",
+        "onlyInt": true,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "fours",
+        "type": "number",
+        "onlyInt": true,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "sixes",
+        "type": "number",
+        "onlyInt": true,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "wickets",
+        "type": "number",
+        "onlyInt": true,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "balls_bowled",
+        "type": "number",
+        "onlyInt": true,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "runs_conceded",
+        "type": "number",
+        "onlyInt": true,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "batted",
+        "type": "bool"
+      },
+      {
+        "name": "not_out",
+        "type": "bool"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_ce_player_match_stats ON ce_player_match_stats (match, player)"
+    ],
+    "created": "",
+    "updated": "",
+    "system": false
+  },
+  {
+    "id": "ce0000000000008",
+    "listRule": "(published = true) || (@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\")",
+    "viewRule": "(published = true) || (@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\")",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "name": "ce_season_history",
+    "type": "base",
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "help": "",
+        "hidden": false,
+        "id": "text3208210256",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "name": "season_number",
+        "type": "number",
+        "onlyInt": true,
+        "min": 1,
+        "max": 999
+      },
+      {
+        "name": "year",
+        "type": "number",
+        "onlyInt": true,
+        "min": 1900,
+        "max": 2200
+      },
+      {
+        "name": "champion",
+        "type": "text",
+        "max": 100,
+        "required": true
+      },
+      {
+        "name": "runner_up",
+        "type": "text",
+        "max": 100,
+        "required": true
+      },
+      {
+        "name": "champion_captain",
+        "type": "text",
+        "max": 150,
+        "help": "Champion captain name, displayed below the team name. Leave empty to hide."
+      },
+      {
+        "name": "runner_up_captain",
+        "type": "text",
+        "max": 150,
+        "help": "Runner-up captain name, displayed below the team name. Leave empty to hide."
+      },
+      {
+        "name": "team_photo",
+        "type": "file",
+        "maxSelect": 1,
+        "maxSize": 10485760,
+        "mimeTypes": ["image/jpeg", "image/png", "image/webp", "image/avif"],
+        "thumbs": ["960x0"],
+        "help": "Optional team photo for this season. Displayed below the champion and runner-up."
+      },
+      {
+        "name": "champion_logo",
+        "type": "file",
+        "maxSelect": 1,
+        "maxSize": 3145728,
+        "mimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/avif"
+        ]
+      },
+      {
+        "name": "runner_up_logo",
+        "type": "file",
+        "maxSelect": 1,
+        "maxSize": 3145728,
+        "mimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/avif"
+        ]
+      },
+      {
+        "name": "published",
+        "type": "bool"
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_ce_season_history ON ce_season_history (season_number)"
+    ],
+    "created": "",
+    "updated": "",
+    "system": false
+  }
+]

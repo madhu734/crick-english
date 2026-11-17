@@ -1,0 +1,9 @@
+node_modules
+dist
+work
+android-scorer
+ce-app
+.git
+.local-admin.txt
+.env.local
+.env.*.local

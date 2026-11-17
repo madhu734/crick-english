@@ -1,0 +1,49 @@
+{
+  "id": "ce0000000000006",
+  "name": "ce_matches",
+  "fields": [
+    {
+      "help": "",
+      "hidden": false,
+      "id": "json2071372490",
+      "maxSize": 524288,
+      "name": "scoring",
+      "presentable": false,
+      "required": false,
+      "system": false,
+      "type": "json"
+    },
+    {
+      "autogeneratePattern": "",
+      "help": "",
+      "hidden": false,
+      "id": "text3866848691",
+      "max": 36,
+      "min": 0,
+      "name": "score_token",
+      "pattern": "",
+      "presentable": false,
+      "primaryKey": false,
+      "required": false,
+      "system": false,
+      "type": "text"
+    },
+    {
+      "autogeneratePattern": "",
+      "help": "",
+      "hidden": false,
+      "id": "text3730057105",
+      "max": 36,
+      "min": 0,
+      "name": "score_parent",
+      "pattern": "",
+      "presentable": false,
+      "primaryKey": false,
+      "required": false,
+      "system": false,
+      "type": "text"
+    }
+  ],
+  "createRule": "(@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\") && @request.body.status = \"scheduled\" && @request.body.scoring:isset = false && @request.body.score_token:isset = false && @request.body.score_parent:isset = false && @request.body.scorecard:isset = false && @request.body.winner:isset = false",
+  "updateRule": "(@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\") && (((@request.body.scoring:isset = false && @request.body.score_token:isset = false && @request.body.score_parent:isset = false && @request.body.scorecard:isset = false && @request.body.status:isset = false && @request.body.winner:isset = false) && (score_token = \"\" || (@request.body.team_a:isset = false && @request.body.team_b:isset = false && @request.body.overs:isset = false && @request.body.season:isset = false && @request.body.stage:isset = false))) || (@request.body.score_token:isset = true && @request.body.score_token != \"\" && @request.body.score_token != score_token && @request.body.score_parent:isset = true && @request.body.score_parent = score_token && @request.body.scoring:isset = true && @request.body.scorecard:isset = true && @request.body.status:isset = true && @request.body.team_a:isset = false && @request.body.team_b:isset = false && @request.body.overs:isset = false && @request.body.season:isset = false && @request.body.stage:isset = false))"
+}
