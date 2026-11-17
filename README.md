@@ -53,7 +53,7 @@ The public header opens Android installation guidance before offering the latest
 npm run build
 ```
 
-The output is in `dist`. The future web host should serve `dist/index.html` for app routes such as `/matches/<id>`, so direct links and page refreshes work. PocketBase remains on its existing server.
+The output is in `dist`. The live website is at https://crickenglish.enggames.tech. Coolify builds the Dockerfile from the GitHub main branch and Nginx serves `dist/index.html` for app routes such as `/matches/<id>`. PocketBase remains on its existing server.
 
 Hero image: generated for this project with the built-in image generator. Prompt: documentary photograph of a Bangladesh university cricket ground at twilight with a helmeted batter to the right, floodlights, and a quiet navy left side for the heading. Saved as `public/cricket-hero.webp`.
 
