@@ -340,7 +340,7 @@ function RecentDeliveries({ innings }: { innings: InningsState }) {
     {groups.length ? <div className="scorer-recent-overs">{[...groups].reverse().map(group =>
       <div className="scorer-recent-over" key={group.over}>
         <span className="scorer-over-label">Over {group.over}</span>
-        <div className="scorer-over-balls">{group.deliveries.map(ball =>
+        <div className="scorer-over-balls">{[...group.deliveries].reverse().map(ball =>
           <span className={'ball ' + (ball.wicket ? 'ball-W' : ball.label === '4' || ball.label === '6' ? 'ball-' + ball.label : '')}
             key={ball.index} aria-label={'Over ' + group.over + ', ' + ball.over + ', ' + ball.label}>{ball.label}</span>)}</div>
       </div>)}</div> : <p>No deliveries yet.</p>}
