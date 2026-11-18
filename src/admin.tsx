@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { ClipboardList, LogOut, Pencil, Plus, ShieldCheck } from 'lucide-react';
+import { ClipboardList, Download, LogOut, Pencil, Plus, ShieldCheck } from 'lucide-react';
 import { dateText, emptyTournament, playerRoles, readTournament, staffDb, stageLabel, timeText, type Match, type Player, type Team } from './data';
 import { Avatar, Crest, Empty, PageTitle } from './ui';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -14,6 +14,13 @@ const sections: [Section, string, string][] = [
 ];
 const validSession = () => staffDb.authStore.isValid && staffDb.authStore.record?.collectionName === 'ce_staff' && staffDb.authStore.record?.role === 'admin';
 const option = (value: string, label: string): Option => ({ value, label });
+
+function ScorerAppDownload() {
+  return <aside className="panel scorer-download">
+    <div><strong>Scorer app for Android</strong><p>Download the app to score matches on your phone.</p></div>
+    <a className="button primary" href="https://github.com/madhu734/crick-english/releases/download/scorer-v1.4/Crick-English-Scorer-1.4.apk"><Download size={17} /> Download APK</a>
+  </aside>;
+}
 
 export function Admin() {
   const [search] = useSearchParams();
@@ -60,7 +67,7 @@ export function Admin() {
     <label>Password<input type="password" name="password" autoComplete="current-password" required /></label>
     {error && <p className="error" role="alert">{error}</p>}
     <button className="button primary" disabled={saving}><ShieldCheck size={17} /> {saving ? 'Signing in…' : 'Sign in'}</button>
-  </form></div>;
+  </form><ScorerAppDownload /></div>;
 
   if (scoringId && !loading && data.season) return <ScoreAdmin key={scoringId} id={scoringId} data={data} onMatchSaved={replaceMatch} />;
 
@@ -166,6 +173,7 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
 
   return <div className="shell page">
     <PageTitle kicker={data.season?.name} title="Tournament admin">{onSignOut && <button className="quiet logout" type="button" onClick={onSignOut}><LogOut size={16} /> Sign out</button>}</PageTitle>
+    {!mobile && <ScorerAppDownload />}
     <div className="tabs admin-tabs">{sections.map(([key, label]) => <button key={key} aria-pressed={section === key} onClick={() => { setSection(key); setEditing(null); setError(''); setMessage(''); }} disabled={saving}>{label}</button>)}</div>
     {mobile && !online && <p className="notice" role="status">Connect to PocketBase to add or edit tournament records.</p>}
     {(error || loadError) && <p className="error" role="alert">{error || loadError}</p>}{message && <p className="success" role="status">{message}</p>}
