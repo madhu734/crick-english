@@ -179,6 +179,10 @@ function TeamPage({ data }: { data: Tournament }) {
   if (!team) return <Missing noun="Team" />;
   const matches = data.matches.filter(match => [match.team_a, match.team_b].includes(team.id));
   return <div className="shell page"><BackLink to="/teams">All teams</BackLink><div className="profile-heading"><Crest team={team} /><PageTitle kicker={data.season?.name} title={team.name} /></div>
+    {(team.owner_name?.trim() || team.owner_photo) && <section className="panel team-owner">
+      {team.owner_photo && <img src={fileUrl(team, team.owner_photo)} alt={team.owner_name ? team.owner_name + ', team owner' : 'Team owner'} loading="lazy" />}
+      <div><small>TEAM OWNER</small><strong>{team.owner_name?.trim() || 'Team owner'}</strong></div>
+    </section>}
     <div className="two-col"><section className="panel padded"><h2>Squad</h2><PlayerList data={data} teamId={team.id} /></section>
     <section><div className="section-heading"><h2>Matches</h2></div><div className="stack">{matches.length ? matches.map(match => <MatchCard match={match} teams={data.teams} key={match.id} />) : <Empty title="No fixtures yet" />}</div></section></div>
   </div>;

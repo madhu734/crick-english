@@ -104,6 +104,8 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
       { name: 'short_name', label: 'Short name', required: true, maxLength: 8 },
       { name: 'color', label: 'Team color', type: 'color' },
       { name: 'logo', label: 'Team logo', type: 'file' },
+      { name: 'owner_name', label: 'Owner name', maxLength: 150 },
+      { name: 'owner_photo', label: 'Owner photo', type: 'file' },
     ],
     players: [
       { name: 'name', label: 'Player name', required: true, maxLength: 100 }, { name: 'batch', label: 'Batch', maxLength: 40 },

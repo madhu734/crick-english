@@ -256,6 +256,19 @@
         "max": 8,
         "required": true
       },
+        {
+          "name": "owner_name",
+          "type": "text",
+          "max": 150
+        },
+        {
+          "name": "owner_photo",
+          "type": "file",
+          "maxSelect": 1,
+          "maxSize": 3145728,
+          "mimeTypes": ["image/jpeg", "image/png", "image/webp", "image/avif"],
+          "thumbs": ["256x256"]
+        },
       {
         "name": "group_name",
         "type": "text",

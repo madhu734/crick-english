@@ -35,15 +35,15 @@ The public site reads published fixtures and history. Season standings use one l
 
 Edit `ce_season_history` in PocketBase. `champion_captain` and `runner_up_captain` show the captain below the corresponding team name. Both are optional; blank values are hidden. `team_photo` holds one optional JPEG, PNG, WebP or AVIF image up to 10 MB. The website and spectator app show it below that season's teams without cropping, and request a 960-pixel thumbnail to reduce downloads. Records without a photo show only their team details. The existing champion and runner-up logo fields remain separate.
 
-The two fictional archive entries for seasons 8 and 7 have sample captain names marked "(demo)". Replace those names and upload real team photos in PocketBase when ready. Published records remain visible through the existing public read rules.
+Published records remain visible through the existing public read rules. Team records also have optional `owner_name` and `owner_photo` fields, editable under Teams in the committee portal; these are independent of player profiles.
 
 ## Testing records
 
-Season 9 currently contains fictional teams, players, fixtures, scorecards, and archive entries for local testing. They are ordinary PocketBase records. `backend/testing-records.json` lists their exact IDs in dependency order for removal before launch. Preserve the active season and committee account. When replacing the test data, remove only the listed IDs and check for real records linked to test teams or players before deleting them.
+The identified fictional teams, players, fixtures and player statistics were removed before real data entry. `backend/testing-records.json` is the historical list of those test IDs. The active season, staff and current history records were preserved.
 
 ## Checks
 
-Run `node --test test/scoring.test.mjs` to verify scoring rules and `npm run build` to check the website. The test records include a running Ink Strikers vs Literary Lions chase, a completed match with ball entries, and upcoming fixtures ready for a fresh score.
+Run `node --test test/scoring.test.mjs` to verify scoring rules and `npm run build` to check the website.
 
 ## Production build
 

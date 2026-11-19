@@ -105,6 +105,10 @@ h3 { font-size:.88rem; margin:1.2rem 0 .4rem; }
 .footer-support a { color:var(--blue); font-weight:650; }
 .page { padding-block:2rem 4rem; }
 .narrow { max-width:495px; }
+.team-owner { display:flex; align-items:center; gap:1rem; padding:1rem 1.2rem; margin-bottom:1rem; }
+.team-owner img { width:64px; height:64px; border-radius:50%; object-fit:cover; }
+.team-owner small { display:block; color:var(--muted); font-size:.72rem; font-weight:700; letter-spacing:.06em; }
+.team-owner strong { display:block; font-size:1.05rem; overflow-wrap:anywhere; }
 .scorer-download { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:.75rem; padding:1rem 1.2rem; margin:1rem 0; }
 .scorer-download p { color:var(--muted); font-size:.83rem; margin-top:.2rem; }
 .scorer-download .button { white-space:nowrap; }

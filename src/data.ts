@@ -6,7 +6,7 @@ export const publicDb = new PocketBase(databaseUrl, new BaseAuthStore());
 export const staffDb = new PocketBase(databaseUrl, new LocalAuthStore('crick-english-staff'));
 
 export type Season = RecordModel & { number: number; name: string; active: boolean };
-export type Team = RecordModel & { season: string; name: string; short_name: string; color: string; logo: string };
+export type Team = RecordModel & { season: string; name: string; short_name: string; color: string; logo: string; owner_name?: string; owner_photo?: string };
 export const playerRoles = ['Bowler', 'Batsman', 'All-rounder', 'Wicketkeeper'] as const;
 export type Player = RecordModel & { name: string; batch: string; role: typeof playerRoles[number]; photo: string; team: string };
 export type Stage = 'league' | 'group' | 'semifinal' | 'final' | 'friendly';
