@@ -23,7 +23,7 @@ export type PlayerStat = RecordModel & {
 };
 export type History = RecordModel & {
   season_number: number; year: number; champion: string; runner_up: string; champion_logo: string; runner_up_logo: string; published: boolean;
-  champion_captain?: string; runner_up_captain?: string; team_photo?: string;
+  champion_captain?: string; runner_up_captain?: string; team_photo?: string; edition?: string;
 };
 export type Tournament = {
   season: Season | undefined; teams: Team[]; players: Player[]; matches: Match[]; stats: PlayerStat[]; history: History[];
