@@ -18,7 +18,7 @@ const option = (value: string, label: string): Option => ({ value, label });
 function ScorerAppDownload() {
   return <aside className="panel scorer-download">
     <div><strong>Scorer app for Android</strong><p>Download the app to score matches on your phone.</p></div>
-    <a className="button primary" href="https://github.com/madhu734/crick-english/releases/download/scorer-v1.5/Crick-English-Scorer-1.5.apk"><Download size={17} /> Download APK</a>
+    <a className="button primary" href="https://github.com/madhu734/crick-english/releases/download/scorer-v1.6/Crick-English-Scorer-1.6.apk"><Download size={17} /> Download APK</a>
   </aside>;
 }
 
