@@ -719,8 +719,15 @@
         "type": "file",
         "maxSelect": 1,
         "maxSize": 10485760,
-        "mimeTypes": ["image/jpeg", "image/png", "image/webp", "image/avif"],
-        "thumbs": ["960x0"],
+        "mimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/avif"
+        ],
+        "thumbs": [
+          "960x0"
+        ],
         "help": "Optional team photo for this season. Displayed below the champion and runner-up."
       },
       {
@@ -750,10 +757,25 @@
       {
         "name": "published",
         "type": "bool"
+      },
+      {
+        "autogeneratePattern": "",
+        "help": "Optional edition or sub-tournament name (e.g. Beta Cup).",
+        "hidden": false,
+        "id": "text2828081183",
+        "max": 100,
+        "min": 0,
+        "name": "edition",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX idx_ce_season_history ON ce_season_history (season_number)"
+      "CREATE UNIQUE INDEX idx_ce_season_history ON ce_season_history (season_number, edition)"
     ],
     "created": "",
     "updated": "",
