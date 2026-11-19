@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ClipboardList, Download, LogOut, Pencil, Plus, ShieldCheck } from 'lucide-react';
-import { dateText, emptyTournament, playerRoles, readTournament, staffDb, stageLabel, timeText, type Match, type Player, type Team } from './data';
+import { dateText, emptyTournament, matchPerformances, playerRoles, readTournament, staffDb, stageLabel, timeText, type Match, type Player, type Team } from './data';
 import { Avatar, Crest, Empty, PageTitle } from './ui';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ScoreAdmin } from './score-admin';
@@ -118,6 +118,22 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
   const currentMatch = section === 'matches' ? record as Match | undefined : undefined;
   const scored = !!currentMatch && (currentMatch.status !== 'scheduled' || !!currentMatch.scorecard);
   const fields = fieldsBySection[section].filter(field => !scored || !['team_a', 'team_b', 'stage', 'overs'].includes(field.name));
+  if (currentMatch?.status === 'completed') {
+    const lineups = currentMatch.scorecard?.playingSides;
+    const participants = new Set(lineups?.flatMap(side => side.players));
+    if (!participants.size) {
+      for (const player of data.players) {
+        if (player.team === currentMatch.team_a || player.team === currentMatch.team_b) participants.add(player.id);
+      }
+      for (const stat of matchPerformances(currentMatch, data.stats)) participants.add(stat.player);
+    }
+    if (currentMatch.player_of_match) participants.add(currentMatch.player_of_match);
+    const options = data.players.filter(player => participants.has(player.id)).map(player => {
+      const team = data.teams.find(team => team.id === player.team);
+      return option(player.id, [player.name, team?.name].filter(Boolean).join(' · '));
+    });
+    fields.push({ name: 'player_of_match', label: 'Player of the Match', options });
+  }
   const sectionTitle = sections.find(([value]) => value === section)![2];
   const canAdd = online && (section === 'matches' ? data.teams.length >= 2 && !!data.season : section === 'teams' ? !!data.season : true);
 
@@ -198,7 +214,8 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
           if (field.type === 'checkbox') return <label className="check" key={field.name}><input name={field.name} type="checkbox" defaultChecked={Boolean(value)} /> {field.label}</label>;
           const date = value && field.type === 'datetime-local' ? new Date(new Date(String(value)).getTime() + 6 * 3600000).toISOString().slice(0, 16) : '';
           if (field.options) return <CompactSelect key={field.name} label={field.label} name={field.name}
-            required={field.required} defaultValue={String(value ?? '')} options={field.options} disabled={saving || !online} />;
+            required={field.required} defaultValue={String(value ?? '')} options={field.options} disabled={saving || !online}
+            placeholder={field.name === 'player_of_match' ? 'No award selected' : undefined} />;
           return <label key={field.name}>{field.label}
             {field.type === 'file' ? <><input type="file" name={field.name} accept="image/jpeg,image/png,image/webp,image/avif" />{value && record && <div className="admin-current-image">{section === 'players' ? <Avatar player={record as Player} /> : <Crest team={record as Team} />}<small>Current image is kept unless replaced.</small></div>}</> :
               <input name={field.name} type={field.type ?? 'text'} required={field.required} maxLength={field.maxLength} min={field.min} max={field.max} defaultValue={

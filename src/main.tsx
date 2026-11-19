@@ -7,6 +7,7 @@ import '@fontsource/barlow-condensed/600.css';
 import '@fontsource/barlow-condensed/700.css';
 import { Admin } from './admin';
 import { MatchAnalysis } from './match-analysis';
+import { GraphicCard, renderPlayerCard, renderTeamCard } from './graphic-cards';
 import { signedRuns } from './scoring';
 import { dateText, emptyTournament, fileUrl, matchPerformances, oversText, playerTotals, publicDb, readMatches, readTournament, runsPerOver, seasonPerformances, stageLabel, standings, strikeRate, timeText, type Tournament } from './data';
 import { Avatar, BackLink, Badge, Crest, Empty, Layout, MatchCard, PageTitle, SiteLink } from './ui';
@@ -125,6 +126,8 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
     setSearch(next, { preventScrollReset: true });
   }
   const stats = matchPerformances(match, data.stats);
+  const awarded = match.status === 'completed' && data.players.find(player => player.id === match.player_of_match);
+  const awardedStats = awarded ? stats.find(row => row.player === awarded.id) : undefined;
   const playerName = (key: string) => data.players.find(player => player.id === key)?.name ?? 'Player';
   return <div className="shell page">
     <BackLink to="/">All matches</BackLink>
@@ -140,6 +143,13 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
       {match.scorecard?.result && <p className="score-result">{match.scorecard.result}</p>}
     </div>
     <div className="detail-tabs tabs"><button aria-pressed={!squad} onClick={() => changeTab(false)}>Scorecard</button><button aria-pressed={squad} onClick={() => changeTab(true)}>Squads</button>{onRefresh && match.status === 'live' && <button type="button" onClick={onRefresh}>Refresh score</button>}</div>
+    {!squad && awarded && <section className="panel match-award">
+      <Avatar player={awarded} />
+      <div><h2><Trophy size={17} /> Player of the Match</h2>
+        <SiteLink to={'/players/' + awarded.id}>{awarded.name}</SiteLink>
+        {awardedStats && <p>{awardedStats.runs} runs · {awardedStats.wickets} wickets</p>}
+      </div>
+    </section>}
     {squad ? <div className="two-col">{teams.map((team, index) => <section className="panel padded" key={team?.id ?? index}><h2>{team?.name ?? 'TBD'}</h2><PlayerList data={data} teamId={team?.id ?? ''} playersInMatch={match.scorecard?.playingSides?.find(side => side.team === team?.id)?.players} /></section>)}</div> :
       !match.scorecard ? <Empty title="Scorecard pending">Scores will appear once the match is scored.</Empty> : <>
         {!!match.scorecard.recent?.length && <section className="panel padded recent"><h2>Recent balls</h2><div>{match.scorecard.recent.slice(-20).map((ball, i) => <span className={'ball ball-' + ball} key={i}>{ball}</span>)}</div>
@@ -164,6 +174,7 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
 function TeamsPage({ data }: { data: Tournament }) {
   return <div className="shell page"><PageTitle kicker={data.season?.name} title="Teams & Players" />
     {data.teams.length ? <div className="team-grid">{data.teams.map(team => <SiteLink to={'/teams/' + team.id} className="team-tile panel" key={team.id}><Crest team={team} /><div><h2>{team.name}</h2><p>{data.players.filter(player => player.team === team.id).length + ' players'}</p></div><ChevronRight size={19} /></SiteLink>)}</div> : <Empty title="Teams will appear here once added" />}
+    {data.players.some(player => !player.team) && <section className="panel padded unassigned-players"><h2>Unassigned players</h2><PlayerList data={data} teamId="" /></section>}
   </div>;
 }
 
@@ -183,6 +194,7 @@ function TeamPage({ data }: { data: Tournament }) {
       {team.owner_photo && <img src={fileUrl(team, team.owner_photo)} alt={team.owner_name ? team.owner_name + ', team owner' : 'Team owner'} loading="lazy" />}
       <div><small>TEAM OWNER</small><strong>{team.owner_name?.trim() || 'Team owner'}</strong></div>
     </section>}
+    <GraphicCard key={team.id} name={team.name} kind="Team" render={() => renderTeamCard(team, data.season?.name ?? '', data.players.filter(player => player.team === team.id))} />
     <div className="two-col"><section className="panel padded"><h2>Squad</h2><PlayerList data={data} teamId={team.id} /></section>
     <section><div className="section-heading"><h2>Matches</h2></div><div className="stack">{matches.length ? matches.map(match => <MatchCard match={match} teams={data.teams} key={match.id} />) : <Empty title="No fixtures yet" />}</div></section></div>
   </div>;
@@ -208,6 +220,7 @@ function PlayerPage({ data }: { data: Tournament }) {
     return <SiteLink to={'/matches/' + row.match}>{opponent ? 'vs ' + opponent.name : 'Match scorecard'}{match && <small>{dateText(match.starts_at)}</small>}</SiteLink>;
   };
   return <div className="shell page"><BackLink to={team ? '/teams/' + team.id : '/teams'}>{team?.name ?? 'All teams'}</BackLink><div className="profile-heading"><Avatar player={player} /><PageTitle kicker={player.role || 'Player'} title={player.name}><div className="detail-meta">{team && <SiteLink to={'/teams/' + team.id}>{team.name}</SiteLink>}{player.batch && <span>Batch {player.batch}</span>}</div></PageTitle></div>
+    <GraphicCard key={player.id} name={player.name} kind="Player" render={() => renderPlayerCard(player, data.season?.name ?? '', team)} />
     <div className="section-heading"><h2>{data.season?.name ?? 'Season'} stats</h2>{rows.length > 0 && <span className="stats-matches">{total.played} {total.played === 1 ? 'match' : 'matches'}</span>}</div>
     {rows.length ? <div className="two-col player-stats">
       <section className="panel padded"><h2>Batting</h2>

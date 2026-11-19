@@ -493,6 +493,14 @@
         "cascadeDelete": false
       },
       {
+        "name": "player_of_match",
+        "type": "relation",
+        "collectionId": "ce0000000000004",
+        "maxSelect": 1,
+        "required": false,
+        "cascadeDelete": false
+      },
+      {
         "name": "scorecard",
         "type": "json"
       },

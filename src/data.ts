@@ -16,6 +16,7 @@ export type Scorecard = { innings: Innings[]; result?: string; recent?: string[]
 export type Match = RecordModel & {
   season: string; team_a: string; team_b: string; starts_at: string; stage: Stage;
   overs: number; status: Status; published: boolean; winner: string; scorecard: Scorecard | null; updated: string;
+  player_of_match?: string;
 };
 export type PlayerStat = RecordModel & {
   match: string; team: string; player: string; runs: number; balls_faced: number; fours: number; sixes: number;
@@ -33,7 +34,7 @@ export const stageLabel: Record<Stage, string> = { league: 'League', group: 'Lea
 
 export async function readMatches(db: PocketBase, season: string, signal?: AbortSignal) {
   return db.collection('ce_matches').getFullList<Match>({
-    filter: db.filter('season = {:season}', { season }), sort: 'starts_at', fields: 'id,collectionId,collectionName,season,team_a,team_b,starts_at,stage,overs,status,published,winner,scorecard,updated', requestKey: null, signal,
+    filter: db.filter('season = {:season}', { season }), sort: 'starts_at', fields: 'id,collectionId,collectionName,season,team_a,team_b,starts_at,stage,overs,status,published,winner,player_of_match,scorecard,updated', requestKey: null, signal,
   });
 }
 
