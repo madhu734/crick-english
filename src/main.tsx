@@ -274,22 +274,25 @@ function TournamentStats({ data }: { data: Tournament }) {
 }
 
 function HistoryPage({ data }: { data: Tournament }) {
-  return <div className="shell page"><PageTitle title="History" /><div className="history-grid">{data.history.map(season => <article className="panel history-card" key={season.id}>
-    <div className="history-top"><Trophy size={23} /><h2>Season {season.season_number}</h2>{!!season.year && <span>{season.year}</span>}</div>
-    <div className="history-body">
-      {[
-        { label: 'Champion', name: season.champion, logo: season.champion_logo, captain: season.champion_captain },
-        { label: 'Runner-up', name: season.runner_up, logo: season.runner_up_logo, captain: season.runner_up_captain },
-      ].map(({ label, name, logo, captain }) => <div className="history-team" key={label}>
-        {logo && <img className="history-logo" src={fileUrl(season, logo)} alt="" loading="lazy" />}
-        <div><small>{label}</small><strong>{name}</strong>{captain?.trim() && <p className="history-captain">Captain: {captain.trim()}</p>}</div>
-      </div>)}
-    </div>
-    {season.team_photo?.trim() && <figure className="history-photo">
-      <img src={publicDb.files.getURL(season, season.team_photo, { thumb: '960x0' })} alt={`Season ${season.season_number} team photo`} loading="lazy" decoding="async" />
-      <figcaption>Season {season.season_number} · Team photo</figcaption>
-    </figure>}
-  </article>)}</div>{!data.history.length && <Empty title="The archive is coming soon">Champion and runner-up records will appear as they are added.</Empty>}</div>;
+  return <div className="shell page"><PageTitle title="History" /><div className="history-grid">{data.history.map(season => {
+    const title = `Season ${season.season_number}${season.edition ? ` (${season.edition})` : ''}`;
+    return <article className="panel history-card" key={season.id}>
+      <div className="history-top"><Trophy size={23} /><h2>{title}</h2>{!!season.year && <span>{season.year}</span>}</div>
+      <div className="history-body">
+        {[
+          { label: 'Champion', name: season.champion, logo: season.champion_logo, captain: season.champion_captain },
+          { label: 'Runner-up', name: season.runner_up, logo: season.runner_up_logo, captain: season.runner_up_captain },
+        ].map(({ label, name, logo, captain }) => <div className="history-team" key={label}>
+          {logo && <img className="history-logo" src={fileUrl(season, logo)} alt="" loading="lazy" />}
+          <div><small>{label}</small><strong>{name}</strong>{captain?.trim() && <p className="history-captain">Captain: {captain.trim()}</p>}</div>
+        </div>)}
+      </div>
+      {season.team_photo?.trim() && <figure className="history-photo">
+        <img src={publicDb.files.getURL(season, season.team_photo, { thumb: '960x0' })} alt={`${title} team photo`} loading="lazy" decoding="async" />
+        <figcaption>{title} · Team photo</figcaption>
+      </figure>}
+    </article>;
+  })}</div>{!data.history.length && <Empty title="The archive is coming soon">Champion and runner-up records will appear as they are added.</Empty>}</div>;
 }
 
 function Missing({ noun }: { noun: string }) {
