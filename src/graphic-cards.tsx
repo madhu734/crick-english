@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
 import { fileUrl, type Player, type Team } from './data';
 
-const gold = '#efd598';
-const navy = '#101b30';
-const pale = '#b5c4dc';
+const ink = '#101928';
+const gold = '#f2cf84';
+const paper = '#f7f1e5';
+const pale = '#c5d1e3';
+const accents = ['#315989', '#285e55', '#624179', '#863f46'];
 
 async function portrait(url: string) {
   if (!url) return null;
@@ -14,97 +16,165 @@ async function portrait(url: string) {
   } catch { return null; }
 }
 
-function canvas(width: number, height: number) {
+function teamAccent(team?: Team) {
+  if (team && /^#[0-9a-f]{6}$/i.test(team.color)) return team.color;
+  let hash = 0;
+  for (const char of (team?.name ?? '')) hash = (Math.imul(31, hash) + char.codePointAt(0)!) >>> 0;
+  return accents[hash % accents.length];
+}
+
+function canvas(height: number, accent: string) {
   const image = document.createElement('canvas');
-  image.width = width;
-  image.height = height;
+  image.width = 2160;
+  image.height = height * 2;
   const ctx = image.getContext('2d')!;
-  const bg = ctx.createLinearGradient(0, 0, width, height);
-  bg.addColorStop(0, '#263f61');
-  bg.addColorStop(.52, navy);
-  bg.addColorStop(1, '#0a1222');
+  ctx.scale(2, 2);
+  const bg = ctx.createLinearGradient(0, height, 1080, 0);
+  bg.addColorStop(0, '#080e1b');
+  bg.addColorStop(.57, '#142238');
+  bg.addColorStop(1, accent);
   ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, 1080, height);
+  ctx.strokeStyle = '#ffffff14';
+  ctx.lineWidth = 1;
+  for (let x = 500; x <= 1900; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x - 840, height);
+    ctx.stroke();
+  }
   ctx.fillStyle = gold;
-  ctx.fillRect(0, 0, width, 12);
+  ctx.fillRect(0, 0, 1080, 7);
   return { image, ctx };
 }
 
-function words(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, size: number, color = '#ffffff', weight = 700) {
-  ctx.font = `${weight} ${size}px "Inter Variable", system-ui, sans-serif`;
-  const measured = ctx.measureText(value).width;
-  if (measured > width) ctx.font = `${weight} ${Math.max(1, Math.floor(size * width / measured))}px "Inter Variable", system-ui, sans-serif`;
+function words(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, size: number, color = '#ffffff', display = false) {
+  const family = display ? '"Barlow Condensed", "Arial Narrow", sans-serif' : '"Inter Variable", system-ui, sans-serif';
+  ctx.font = `700 ${size}px ${family}`;
+  const ratio = Math.min(1, width / (ctx.measureText(value).width || 1));
+  if (ratio < 1) ctx.font = `700 ${Math.floor(size * ratio)}px ${family}`;
   ctx.fillStyle = color;
   ctx.fillText(value, x, y);
 }
 
-function photo(ctx: CanvasRenderingContext2D, bitmap: ImageBitmap | null, name: string, x: number, y: number, size: number, radius: number) {
+function box(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number, color: string) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, radius);
+  ctx.fill();
+}
+
+function picture(ctx: CanvasRenderingContext2D, bitmap: ImageBitmap | null, initials: string, x: number, y: number,
+                 width: number, height: number, radius: number, contain = false) {
   ctx.save();
   ctx.beginPath();
-  ctx.roundRect(x, y, size, size, radius);
+  ctx.roundRect(x, y, width, height, radius);
   ctx.clip();
-  ctx.fillStyle = '#314968';
-  ctx.fillRect(x, y, size, size);
+  ctx.fillStyle = contain ? '#ffffff' : '#293b55';
+  ctx.fillRect(x, y, width, height);
   if (bitmap) {
-    const side = Math.min(bitmap.width, bitmap.height);
-    ctx.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, x, y, size, size);
+    const scale = contain
+      ? .79 * Math.min(width / bitmap.width, height / bitmap.height)
+      : Math.max(width / bitmap.width, height / bitmap.height);
+    const w = bitmap.width * scale;
+    const h = bitmap.height * scale;
+    ctx.drawImage(bitmap, x + (width - w) / 2, y + (height - h) * (contain ? .5 : .35), w, h);
   } else {
-    const initials = name.trim().split(/\s+/).slice(0, 2).map(word => [...word][0]).join('').toUpperCase();
     ctx.textAlign = 'center';
-    words(ctx, initials, x + size / 2, y + size * .64, size * .8, size * .35, gold);
+    const size = Math.min(width, height) * (contain ? .32 : .39);
+    if (contain) {
+      const center = x + width / 2;
+      ctx.fillStyle = ink;
+      ctx.beginPath();
+      ctx.moveTo(center - 39, y + 28);
+      ctx.lineTo(center + 39, y + 28);
+      ctx.lineTo(center + 35, y + 87);
+      ctx.lineTo(center, y + 111);
+      ctx.lineTo(center - 35, y + 87);
+      ctx.closePath();
+      ctx.fill();
+    }
+    words(ctx, initials, x + width / 2, y + height / 2 + size * .32 - (contain ? 5 : 0),
+      contain ? 65 : width * .8, size, gold, true);
   }
   ctx.restore();
 }
 
-function header(ctx: CanvasRenderingContext2D, season: string, width: number) {
-  words(ctx, 'CRICK ENGLISH', 84, 103, width / 2, 34, gold);
+function initials(name: string) {
+  return name.trim().split(/\s+/).slice(0, 2).map(word => [...word][0] ?? '').join('').toUpperCase();
+}
+
+function header(ctx: CanvasRenderingContext2D, season: string) {
+  words(ctx, 'CRICK ENGLISH', 54, 71, 480, 39, '#ffffff', true);
   ctx.textAlign = 'right';
-  words(ctx, season, width - 84, 103, width / 2 - 100, 32, pale, 500);
+  words(ctx, season.toUpperCase(), 1026, 71, 395, 23, gold);
   ctx.textAlign = 'left';
 }
 
+function footer(ctx: CanvasRenderingContext2D, height: number) {
+  box(ctx, 54, height - 65, 972, 1, 0, '#ffffff55');
+  words(ctx, 'crickenglish.enggames.tech', 54, height - 32, 972, 19, pale);
+}
+
 export async function renderPlayerCard(player: Player, season: string, team?: Team) {
-  const { image, ctx } = canvas(1600, 2000);
-  header(ctx, season, image.width);
-  const bitmap = await portrait(fileUrl(player, player.photo));
-  photo(ctx, bitmap, player.name, 200, 165, 1200, 52);
+  const accent = teamAccent(team);
+  const { image, ctx } = canvas(1350, accent);
+  header(ctx, season);
+  const [bitmap, crest] = await Promise.all([
+    portrait(fileUrl(player, player.photo)),
+    portrait(team ? fileUrl(team, team.logo) : ''),
+  ]);
+  picture(ctx, bitmap, initials(player.name), 54, 110, 972, 795, 28);
   bitmap?.close();
-  ctx.textAlign = 'center';
-  words(ctx, player.name, 800, 1544, 1432, 112);
-  const meta = [player.role, player.batch && 'Batch ' + player.batch].filter(Boolean).join('  ·  ');
-  words(ctx, meta, 800, 1654, 1432, 56, gold);
-  if (team) words(ctx, team.name, 800, 1762, 1432, 52, pale, 500);
-  ctx.fillStyle = gold;
-  ctx.fillRect(744, 1856, 112, 6);
+  box(ctx, 54, 857, 972, 398, 28, paper);
+  box(ctx, 88, 895, 7, 56, 3, accent);
+  words(ctx, team?.name.toUpperCase() ?? 'PLAYER PROFILE', 112, 939, team ? 704 : 850, 53, ink, true);
+  if (team) picture(ctx, crest, team.short_name || initials(team.name), 837, 882, 154, 142, 18, true);
+  crest?.close();
+  box(ctx, 88, 1037, 904, 2, 0, '#10192830');
+  words(ctx, player.name.toUpperCase(), 88, 1143, 904, 98, ink, true);
+  const meta = [player.role, player.batch && 'Batch ' + player.batch].filter(Boolean).join('    /    ');
+  words(ctx, meta, 90, 1208, 900, 27, '#394a61');
+  footer(ctx, 1350);
   return image;
 }
 
 export async function renderTeamCard(team: Team, season: string, players: Player[]) {
-  const { image, ctx } = canvas(1920, Math.max(1080, 334 + Math.ceil(players.length / 2) * 122));
-  header(ctx, season, image.width);
+  const columns = players.length <= 4 ? Math.min(2, Math.max(1, players.length)) : players.length <= 9 ? 3 : 4;
+  const rows = Math.ceil(players.length / columns);
+  const tileWidth = Math.floor((972 - (columns - 1) * 16) / columns);
+  const tileHeight = rows <= 1 ? 892 : rows === 2 ? 446 : 291;
+  const height = Math.max(1350, 331 + rows * (tileHeight + 16) + 68);
+  const { image, ctx } = canvas(height, teamAccent(team));
+  header(ctx, season);
+  box(ctx, 54, 111, 972, 182, 23, paper);
   const crest = await portrait(fileUrl(team, team.logo));
-  photo(ctx, crest, team.name, 84, 139, 130, 24);
+  picture(ctx, crest, team.short_name || initials(team.name), 76, 132, 138, 138, 16, true);
   crest?.close();
-  words(ctx, team.name, 242, 216, 1594, 85);
-  const owner = team.owner_name?.trim();
-  words(ctx, [`SQUAD · ${players.length}`, owner && 'Owner: ' + owner].filter(Boolean).join('   |   '), 245, 269, 1591, 32, gold);
+  words(ctx, team.name.toUpperCase(), 244, 214, 750, 77, ink, true);
+  const subtitle = ['SQUAD', `${players.length} ${players.length === 1 ? 'PLAYER' : 'PLAYERS'}`, team.owner_name?.trim()].filter(Boolean).join('   /   ');
+  words(ctx, subtitle, 247, 259, 747, 22, '#394a61');
   for (let offset = 0; offset < players.length; offset += 4) {
     await Promise.all(players.slice(offset, offset + 4).map(async (player, idx) => {
       const bitmap = await portrait(fileUrl(player, player.photo));
       const i = offset + idx;
-      const x = 84 + i % 2 * 888;
-      const y = 310 + Math.floor(i / 2) * 122;
-      ctx.fillStyle = '#22334e';
-      ctx.beginPath();
-      ctx.roundRect(x, y, 864, 106, 15);
-      ctx.fill();
-      photo(ctx, bitmap, player.name, x + 12, y + 12, 82, 12);
+      const row = Math.floor(i / columns);
+      const rowCount = Math.min(columns, players.length - row * columns);
+      const x = 54 + (columns - rowCount) * (tileWidth + 16) / 2 + i % columns * (tileWidth + 16);
+      const y = 322 + row * (tileHeight + 16);
+      const textHeight = tileWidth >= 400 ? 95 : 67;
+      picture(ctx, bitmap, initials(player.name), x, y, tileWidth, tileHeight, 14);
       bitmap?.close();
-      words(ctx, player.name, x + 114, y + 48, 723, 35);
-      words(ctx, [player.role, player.batch && 'Batch ' + player.batch].filter(Boolean).join('  ·  '), x + 114, y + 83, 723, 24, pale, 500);
+      const strip = y + tileHeight - textHeight;
+      box(ctx, x, strip, tileWidth, textHeight, 12, '#101a2c');
+      box(ctx, x + 12, strip + 13, 3, textHeight - 26, 1, gold);
+      words(ctx, player.name, x + 24, strip + textHeight * .48, tileWidth - 38, tileWidth >= 400 ? 37 : 28, '#ffffff', true);
+      words(ctx, [player.role, player.batch && 'Batch ' + player.batch].filter(Boolean).join(' · '),
+        x + 24, strip + textHeight * .79, tileWidth - 38, tileWidth >= 400 ? 20 : 14, pale);
     }));
   }
-  if (!players.length) words(ctx, 'Squad pending', 84, 418, 1752, 42, pale);
+  if (!players.length) words(ctx, 'Squad pending', 54, 400, 972, 42, pale, true);
+  footer(ctx, height);
   return image;
 }
 
@@ -120,7 +190,8 @@ export function GraphicCard({ name, kind, render }: { name: string; kind: 'Playe
     setBusy(true);
     setError(false);
     try {
-      await document.fonts.ready;
+      await document.fonts.load('700 50px "Barlow Condensed"');
+      await document.fonts.load('700 20px "Inter Variable"');
       const canvas = await render();
       const png = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!png) throw new Error('PNG unavailable');
