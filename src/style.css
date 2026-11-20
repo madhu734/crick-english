@@ -85,6 +85,7 @@ h3 { font-size:.88rem; margin:1.2rem 0 .4rem; }
 .team-score > small { color:var(--muted); }
 .crest,.avatar { display:grid; place-items:center; flex:none; width:34px; height:32px; border-radius:8px; background:color-mix(in srgb,var(--crest) 15%,white); color:color-mix(in srgb,var(--crest) 46%,#132441); font-size:.65rem; font-weight:800; overflow:hidden; }
 .crest img,.avatar img,.history-body img { width:100%; height:100%; object-fit:contain; }
+.crest img { padding:3px; }
 .avatar { width:39px; height:39px; border-radius:50%; background:#e9eefb; color:#32538d; font-size:.76rem; }
 .avatar img { object-fit:cover; }
 .side-panel { padding:.35rem 1rem .2rem; }
