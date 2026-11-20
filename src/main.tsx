@@ -321,5 +321,26 @@ function Missing({ noun }: { noun: string }) {
   return <div className="shell page"><BackLink to="/">Home</BackLink><Empty title={noun + ' unavailable'}>Check the link or return to Home.</Empty></div>;
 }
 
-createRoot(document.getElementById('root')!).render(<BrowserRouter><App /></BrowserRouter>);
+createRoot(document.getElementById('root')!, {
+  onUncaughtError() {
+    const root = document.getElementById('root')!;
+    root.replaceChildren();
+    const panel = document.createElement('div');
+    panel.className = 'shell page';
+    const title = document.createElement('h1');
+    title.textContent = 'Crick English';
+    const message = document.createElement('p');
+    message.textContent = 'The page could not load. Please reload to try again.';
+    const reload = document.createElement('button');
+    reload.className = 'button primary';
+    reload.textContent = 'Reload website';
+    reload.onclick = () => {
+      const url = new URL(location.href);
+      url.searchParams.set('refresh', String(Date.now()));
+      location.replace(url.href);
+    };
+    panel.append(title, message, reload);
+    root.append(panel);
+  },
+}).render(<BrowserRouter><App /></BrowserRouter>);
 

@@ -12,5 +12,35 @@
     <meta name="description" content="Fixtures, results and player stats for Crick English, the Department of English cricket tournament." />
     <title>Crick English · Season 9</title>
   </head>
-  <body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
+  <body>
+    <div id="root"><div style="max-width:520px;margin:15vh auto;padding:24px;font:16px system-ui;color:#101928"><h1>Crick English</h1><p id="boot-message">Loading the tournament…</p><button type="button" onclick="location.replace(location.pathname + '?refresh=' + Date.now() + location.hash)">Reload website</button></div></div>
+    <script>
+      (() => {
+        function recover() {
+          const message = document.getElementById('boot-message');
+          if (!message) return;
+          message.textContent = 'The website could not start. Check your connection and reload.';
+          try {
+            const last = Number(sessionStorage.getItem('ce-boot-recovery') || 0);
+            if (Date.now() - last > 60000) {
+              sessionStorage.setItem('ce-boot-recovery', String(Date.now()));
+              const url = new URL(location.href);
+              url.searchParams.set('refresh', String(Date.now()));
+              location.replace(url.href);
+            }
+          } catch {}
+        }
+        window.addEventListener('error', event => {
+          if (event.target instanceof HTMLScriptElement) recover();
+        }, true);
+        window.addEventListener('unhandledrejection', recover);
+        window.addEventListener('error', recover);
+        setTimeout(() => {
+          const message = document.getElementById('boot-message');
+          if (message) message.textContent = 'Loading is taking longer than expected. Check your connection or reload.';
+        }, 15000);
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

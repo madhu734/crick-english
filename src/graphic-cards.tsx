@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
 import { fileUrl, type Player, type Team } from './data';
-import { teamLogoFrame } from './team-logo';
+import { teamLogoBackground, teamLogoFrame } from './team-logo';
 
 const ink = '#101928';
 const gold = '#f2cf84';
@@ -71,7 +71,7 @@ function picture(ctx: CanvasRenderingContext2D, bitmap: ImageBitmap | null, init
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
   ctx.clip();
-  ctx.fillStyle = contain ? '#ffffff' : '#293b55';
+  ctx.fillStyle = contain ? teamLogoBackground(logoFile) : '#293b55';
   ctx.fillRect(x, y, width, height);
   if (bitmap) {
     const [top, right, bottom, left] = teamLogoFrame(logoFile) ?? [0, 0, 0, 0];

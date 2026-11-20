@@ -11,3 +11,10 @@ const logoFrames = new Map<string, LogoFrame>([
 export function teamLogoFrame(file = '') {
   return logoFrames.get(file);
 }
+
+export function teamLogoBackground(file = '') {
+  if (file.startsWith('phoenix_')) return '#080808';
+  if (file.startsWith('raptors_')) return '#09182b';
+  if (file.startsWith('whk_')) return '#12334e';
+  return '#ffffff';
+}
