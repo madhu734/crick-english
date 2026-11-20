@@ -88,7 +88,10 @@ h3 { font-size:.88rem; margin:1.2rem 0 .4rem; }
 .crest img { padding:3px; }
 .crest svg { width:100%; height:100%; padding:3px; }
 .player-search { margin-bottom:16px; }
-.player-search input { display:block; width:min(100%, 26rem); margin:6px 0; }
+.player-search-field { display:flex; align-items:center; gap:12px; max-width:32rem; padding:0 16px; border:1px solid #d7dfeb; border-radius:12px; background:#fff; color:#65738a; transition:border-color .15s, box-shadow .15s; }
+.player-search-field:focus-within { border-color:#6862bd; box-shadow:0 0 0 3px #6862bd24; }
+.player-search-field input { flex:1; min-width:0; height:48px; border:0; outline:0; background:transparent; font:inherit; color:#101928; }
+.player-search .row-list { margin-top:10px; }
 .avatar { width:39px; height:39px; border-radius:50%; background:#e9eefb; color:#32538d; font-size:.76rem; }
 .avatar img { object-fit:cover; }
 .side-panel { padding:.35rem 1rem .2rem; }

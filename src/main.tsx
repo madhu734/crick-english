@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes, useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowDown, ArrowRight, CalendarDays, ChevronRight, Clock3, RefreshCw, Trophy, UsersRound } from 'lucide-react';
+import { ArrowDown, ArrowRight, CalendarDays, ChevronRight, Clock3, RefreshCw, Search, Trophy, UsersRound } from 'lucide-react';
 import '@fontsource-variable/inter';
 import '@fontsource/barlow-condensed/600.css';
 import '@fontsource/barlow-condensed/700.css';
@@ -206,9 +206,11 @@ function TeamsPage({ data }: { data: Tournament }) {
   const query = search.trim().toLowerCase();
   const matches = query ? data.players.filter(player => player.name.toLowerCase().includes(query) || player.batch === query) : [];
   return <div className="shell page"><PageTitle kicker={data.season?.name} title="Teams & Players" />
-    <section className="panel padded player-search">
-      <label htmlFor="player-search">Find a player</label>
-      <input id="player-search" type="search" value={search} onChange={event => setSearch(event.currentTarget.value)} placeholder="Name or batch number" />
+    <section className="player-search">
+      <div className="player-search-field">
+        <Search size={20} aria-hidden="true" />
+        <input id="player-search" type="search" aria-label="Search players by name or batch" value={search} onChange={event => setSearch(event.currentTarget.value)} />
+      </div>
       {query && (matches.length ? <ul className="row-list">{matches.map(player => <li key={player.id}>
         <SiteLink to={'/players/' + player.id}><Avatar player={player} /><div><strong>{player.name}</strong>
           <small>{[data.teams.find(team => team.id === player.team)?.name, player.batch && 'Batch ' + player.batch].filter(Boolean).join(' · ')}</small>
