@@ -128,7 +128,11 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
   const stats = matchPerformances(match, data.stats);
   const awarded = match.status === 'completed' && data.players.find(player => player.id === match.player_of_match);
   const awardedStats = awarded ? stats.find(row => row.player === awarded.id) : undefined;
-  const playerName = (key: string) => data.players.find(player => player.id === key)?.name ?? 'Player';
+  const playerName = (key: string) => {
+    const player = data.players.find(item => item.id === key);
+    const captain = data.teams.some(team => team.id === player?.team && team.captain === key);
+    return (player?.name ?? 'Player') + (captain ? ' (C)' : '');
+  };
   return <div className="shell page">
     <BackLink to="/">All matches</BackLink>
     <PageTitle kicker={stageLabel[match.stage]} title={teams.map(team => team?.name ?? 'TBD').join(' vs ')}>
@@ -181,7 +185,8 @@ function TeamsPage({ data }: { data: Tournament }) {
 function PlayerList({ data, teamId, playersInMatch }: { data: Tournament; teamId: string; playersInMatch?: string[] }) {
   const ids = new Set(playersInMatch ?? data.players.filter(player => player.team === teamId).map(player => player.id));
   const players = data.players.filter(player => ids.has(player.id));
-  return players.length ? <ul className="row-list">{players.map(player => <li key={player.id}><SiteLink to={'/players/' + player.id}><Avatar player={player} /><div><strong>{player.name}</strong><small>{[player.role, player.batch && 'Batch ' + player.batch].filter(Boolean).join(' · ')}</small></div><ChevronRight size={17} /></SiteLink></li>)}</ul> : <Empty title="Squad pending" />;
+  const captain = data.teams.find(team => team.id === teamId)?.captain;
+  return players.length ? <ul className="row-list">{players.map(player => <li key={player.id}><SiteLink to={'/players/' + player.id}><Avatar player={player} /><div><strong>{player.name} {player.id === captain && <span aria-label="Captain" title="Captain">(C)</span>}</strong><small>{[player.role, player.batch && 'Batch ' + player.batch].filter(Boolean).join(' · ')}</small></div><ChevronRight size={17} /></SiteLink></li>)}</ul> : <Empty title="Squad pending" />;
 }
 
 function TeamPage({ data }: { data: Tournament }) {
