@@ -2,6 +2,7 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { CalendarDays, ChevronRight, CircleDot, Download, Trophy } from 'lucide-react';
 import { dateText, fileUrl, oversText, stageLabel, timeText, type Match, type Player, type Team } from './data';
+import { teamLogoFrame } from './team-logo';
 
 export function SiteLink({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
   return <Link to={to} className={className}>{children}</Link>;
@@ -35,7 +36,7 @@ export function Layout({ children }: { children: ReactNode }) {
     </div></header>
     <main>{children}</main>
     <footer className="footer"><div className="shell"><span>Crick English</span>
-      <div className="footer-support"><strong>Need help?</strong><p>For queries, suggestions, or requests to edit or update your information, email <a href="mailto:support@enggames.tech">support@enggames.tech</a>.</p></div>
+      <div className="footer-support"><strong>Need help?</strong><p>For questions, suggestions, or profile updates, email <a href="mailto:support@enggames.tech">support@enggames.tech</a>. To request an update, include your profile name, the information currently shown, and what should replace it. If you want to change your photo, attach the new one.</p></div>
     </div></footer>
   </>;
 }
@@ -49,9 +50,12 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
 export function Crest({ team }: { team?: Team }) {
   const [failedUrl, setFailedUrl] = useState('');
   const url = team?.logo ? fileUrl(team, team.logo) : '';
+  const frame = teamLogoFrame(team?.logo);
   const color = /^#[0-9a-f]{6}$/i.test(team?.color ?? '') ? team!.color : '#547cb9';
   return <span className="crest" aria-hidden="true" style={{ '--crest': color } as CSSProperties}>
-    {url && failedUrl !== url ? <img alt="" src={url} loading="lazy" onError={() => setFailedUrl(url)} /> : team?.short_name ?? '—'}
+    {url && failedUrl !== url ? <img alt="" src={url} loading="lazy"
+      style={frame ? { objectViewBox: `inset(${frame.map(edge => edge + '%').join(' ')})` } : undefined}
+      onError={() => setFailedUrl(url)} /> : team?.short_name ?? '—'}
   </span>;
 }
 export function Avatar({ player }: { player: Player }) {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
 import { fileUrl, type Player, type Team } from './data';
+import { teamLogoFrame } from './team-logo';
 
 const ink = '#101928';
 const gold = '#f2cf84';
@@ -65,7 +66,7 @@ function box(ctx: CanvasRenderingContext2D, x: number, y: number, width: number,
 }
 
 function picture(ctx: CanvasRenderingContext2D, bitmap: ImageBitmap | null, initials: string, x: number, y: number,
-                 width: number, height: number, radius: number, contain = false) {
+                 width: number, height: number, radius: number, contain = false, logoFile?: string) {
   ctx.save();
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
@@ -73,12 +74,16 @@ function picture(ctx: CanvasRenderingContext2D, bitmap: ImageBitmap | null, init
   ctx.fillStyle = contain ? '#ffffff' : '#293b55';
   ctx.fillRect(x, y, width, height);
   if (bitmap) {
+    const [top, right, bottom, left] = teamLogoFrame(logoFile) ?? [0, 0, 0, 0];
+    const sourceWidth = bitmap.width * (100 - left - right) / 100;
+    const sourceHeight = bitmap.height * (100 - top - bottom) / 100;
     const scale = contain
-      ? .79 * Math.min(width / bitmap.width, height / bitmap.height)
-      : Math.max(width / bitmap.width, height / bitmap.height);
-    const w = bitmap.width * scale;
-    const h = bitmap.height * scale;
-    ctx.drawImage(bitmap, x + (width - w) / 2, y + (height - h) * (contain ? .5 : .35), w, h);
+      ? .88 * Math.min(width / sourceWidth, height / sourceHeight)
+      : Math.max(width / sourceWidth, height / sourceHeight);
+    const w = sourceWidth * scale;
+    const h = sourceHeight * scale;
+    ctx.drawImage(bitmap, bitmap.width * left / 100, bitmap.height * top / 100, sourceWidth, sourceHeight,
+      x + (width - w) / 2, y + (height - h) * (contain ? .5 : .35), w, h);
   } else {
     ctx.textAlign = 'center';
     const size = Math.min(width, height) * (contain ? .32 : .39);
@@ -124,17 +129,38 @@ export async function renderPlayerCard(player: Player, season: string, team?: Te
     portrait(fileUrl(player, player.photo)),
     portrait(team ? fileUrl(team, team.logo) : ''),
   ]);
-  picture(ctx, bitmap, initials(player.name), 54, 110, 972, 795, 28);
-  bitmap?.close();
-  box(ctx, 54, 857, 972, 398, 28, paper);
-  box(ctx, 88, 895, 7, 56, 3, accent);
-  words(ctx, team?.name.toUpperCase() ?? 'PLAYER PROFILE', 112, 939, team ? 704 : 850, 53, ink, true);
-  if (team) picture(ctx, crest, team.short_name || initials(team.name), 837, 882, 154, 142, 18, true);
+  box(ctx, 54, 110, 972, 1144, 28, paper);
+  box(ctx, 54, 154, 8, 150, 4, accent);
+  if (team) {
+    picture(ctx, crest, team.short_name || initials(team.name), 94, 154, 194, 150, 18, true, team.logo);
+    words(ctx, team.name.toUpperCase(), 322, 252, 656, 75, ink, true);
+  } else {
+    words(ctx, 'PLAYER PROFILE', 94, 252, 892, 75, ink, true);
+  }
   crest?.close();
-  box(ctx, 88, 1037, 904, 2, 0, '#10192830');
-  words(ctx, player.name.toUpperCase(), 88, 1143, 904, 98, ink, true);
-  const meta = [player.role, player.batch && 'Batch ' + player.batch].filter(Boolean).join('    /    ');
-  words(ctx, meta, 90, 1208, 900, 27, '#394a61');
+  box(ctx, 94, 345, 892, 2, 0, '#10192830');
+  words(ctx, player.name.toUpperCase(), 91, 479, 895, 110, ink, true);
+
+  box(ctx, 94, 541, 436, 596, 24, accent);
+  picture(ctx, bitmap, initials(player.name), 94, 541, 436, 584, 24);
+  bitmap?.close();
+  const details = [
+    { label: 'PLAYING ROLE', value: player.role.trim() },
+    { label: 'BATCH', value: player.batch.trim() },
+  ].filter(detail => detail.value);
+  if (details.length) {
+    box(ctx, 558, 541, 428, 596, 24, ink);
+    box(ctx, 598, 590, 50, 4, 2, gold);
+    const firstLine = details.length === 2 ? 688 : 775;
+    details.forEach(({ label, value }, index) => {
+      const line = firstLine + index * 212;
+      words(ctx, label, 598, line, 348, 24, pale);
+      words(ctx, value.toUpperCase(), 595, line + 77, 351, 69, '#ffffff', true);
+    });
+    if (details.length === 2) box(ctx, 598, 815, 348, 1, 0, '#ffffff45');
+    box(ctx, 598, 1088, 348, 1, 0, '#ffffff45');
+  }
+  box(ctx, 94, 1194, 892, 2, 0, '#10192830');
   footer(ctx, 1350);
   return image;
 }
@@ -149,7 +175,7 @@ export async function renderTeamCard(team: Team, season: string, players: Player
   header(ctx, season);
   box(ctx, 54, 111, 972, 182, 23, paper);
   const crest = await portrait(fileUrl(team, team.logo));
-  picture(ctx, crest, team.short_name || initials(team.name), 76, 132, 138, 138, 16, true);
+  picture(ctx, crest, team.short_name || initials(team.name), 76, 132, 138, 138, 16, true, team.logo);
   crest?.close();
   words(ctx, team.name.toUpperCase(), 244, 214, 750, 77, ink, true);
   const subtitle = ['SQUAD', `${players.length} ${players.length === 1 ? 'PLAYER' : 'PLAYERS'}`, team.owner_name?.trim()].filter(Boolean).join('   /   ');
