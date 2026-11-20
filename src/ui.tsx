@@ -2,7 +2,7 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { CalendarDays, ChevronRight, CircleDot, Download, Trophy } from 'lucide-react';
 import { dateText, fileUrl, oversText, stageLabel, timeText, type Match, type Player, type Team } from './data';
-import { teamLogoBackground, teamLogoFrame } from './team-logo';
+import { teamLogoBackground, teamLogoViewBox } from './team-logo';
 
 export function SiteLink({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
   return <Link to={to} className={className}>{children}</Link>;
@@ -50,12 +50,14 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
 export function Crest({ team }: { team?: Team }) {
   const [failedUrl, setFailedUrl] = useState('');
   const url = team?.logo ? fileUrl(team, team.logo) : '';
-  const frame = teamLogoFrame(team?.logo);
+  const frame = teamLogoViewBox(team?.logo);
   const color = /^#[0-9a-f]{6}$/i.test(team?.color ?? '') ? team!.color : '#547cb9';
   return <span className="crest" aria-hidden="true" style={{ '--crest': color, background: team?.logo ? teamLogoBackground(team.logo) : undefined } as CSSProperties}>
-    {url && failedUrl !== url ? <img alt="" src={url} loading="lazy"
-      style={frame ? { objectViewBox: `inset(${frame.map(edge => edge + '%').join(' ')})` } : undefined}
-      onError={() => setFailedUrl(url)} /> : team?.short_name ?? '—'}
+    {url && failedUrl !== url ? frame
+      ? <svg viewBox={frame.viewBox} preserveAspectRatio="xMidYMid meet"><image href={url}
+          width={frame.width} height={frame.height} onError={() => setFailedUrl(url)} /></svg>
+      : <img alt="" src={url} loading="lazy" onError={() => setFailedUrl(url)} />
+      : team?.short_name ?? '—'}
   </span>;
 }
 export function Avatar({ player }: { player: Player }) {

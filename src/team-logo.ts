@@ -12,6 +12,22 @@ export function teamLogoFrame(file = '') {
   return logoFrames.get(file);
 }
 
+export function teamLogoViewBox(file = '') {
+  const sizes: Record<string, [number, number]> = {
+    'lords_2ammq9i5i4.PNG': [1536, 1024],
+    'phoenix_kbp1s68715.png': [500, 500],
+    'raptors_aql7zc18fu.jpeg': [1376, 768],
+    'whk_k4z8x9vhqq.jpeg': [1024, 1024],
+  };
+  const size = sizes[file];
+  const frame = teamLogoFrame(file);
+  if (!size || !frame) return undefined;
+  const [width, height] = size;
+  const [top, right, bottom, left] = frame;
+  return { width, height, viewBox: [width * left / 100, height * top / 100,
+    width * (100 - left - right) / 100, height * (100 - top - bottom) / 100].join(' ') };
+}
+
 export function teamLogoBackground(file = '') {
   if (file.startsWith('phoenix_')) return '#080808';
   if (file.startsWith('raptors_')) return '#09182b';
