@@ -144,21 +144,19 @@ export async function renderPlayerCard(player: Player, season: string, team?: Te
   box(ctx, 94, 541, 436, 596, 24, accent);
   picture(ctx, bitmap, initials(player.name), 94, 541, 436, 584, 24);
   bitmap?.close();
-  const details = [
-    { label: 'PLAYING ROLE', value: player.role.trim() },
-    { label: 'BATCH', value: player.batch.trim() },
-  ].filter(detail => detail.value);
-  if (details.length) {
+  const role = player.role.trim();
+  const batch = player.batch.trim();
+  if (role || batch) {
     box(ctx, 558, 541, 428, 596, 24, ink);
     box(ctx, 598, 590, 50, 4, 2, gold);
-    const firstLine = details.length === 2 ? 688 : 775;
-    details.forEach(({ label, value }, index) => {
-      const line = firstLine + index * 212;
-      words(ctx, label, 598, line, 348, 24, pale);
-      words(ctx, value.toUpperCase(), 595, line + 77, 351, 69, '#ffffff', true);
-    });
-    if (details.length === 2) box(ctx, 598, 815, 348, 1, 0, '#ffffff45');
-    box(ctx, 598, 1088, 348, 1, 0, '#ffffff45');
+    if (role) {
+      words(ctx, 'PLAYING ROLE', 598, 760, 348, 24, pale);
+      words(ctx, role.toUpperCase(), 595, 837, 351, 69, '#ffffff', true);
+    }
+    if (batch) {
+      if (role) box(ctx, 598, 996, 348, 1, 0, '#ffffff45');
+      words(ctx, 'Batch ' + batch, 598, role ? 1052 : 849, 348, 26, pale);
+    }
   }
   box(ctx, 94, 1194, 892, 2, 0, '#10192830');
   footer(ctx, 1350);
