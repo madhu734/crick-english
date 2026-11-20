@@ -164,11 +164,18 @@ export async function renderPlayerCard(player: Player, season: string, team?: Te
 }
 
 export async function renderTeamCard(team: Team, season: string, players: Player[]) {
+  const captain = players.find(player => player.id === team.captain);
+  const leadership = [
+    { role: 'OWNER', name: team.owner_name?.trim(), photo: fileUrl(team, team.owner_photo ?? '') },
+    { role: 'MANAGER', name: team.manager_name?.trim(), photo: fileUrl(team, team.manager_photo ?? '') },
+    { role: 'CAPTAIN', name: captain?.name, photo: captain ? fileUrl(captain, captain.photo) : '' },
+  ].filter(person => person.name);
+  const gridTop = leadership.length ? 448 : 322;
   const columns = players.length <= 4 ? Math.min(2, Math.max(1, players.length)) : players.length <= 9 ? 3 : 4;
   const rows = Math.ceil(players.length / columns);
   const tileWidth = Math.floor((972 - (columns - 1) * 16) / columns);
   const tileHeight = rows <= 1 ? 892 : rows === 2 ? 446 : 291;
-  const height = Math.max(1350, 331 + rows * (tileHeight + 16) + 68);
+  const height = Math.max(1350, gridTop + rows * (tileHeight + 16) + 77);
   const { image, ctx } = canvas(height, teamAccent(team));
   header(ctx, season);
   box(ctx, 54, 111, 972, 182, 23, paper);
@@ -176,8 +183,19 @@ export async function renderTeamCard(team: Team, season: string, players: Player
   picture(ctx, crest, team.short_name || initials(team.name), 76, 132, 138, 138, 16, true, team.logo);
   crest?.close();
   words(ctx, team.name.toUpperCase(), 244, 214, 750, 77, ink, true);
-  const subtitle = ['SQUAD', `${players.length} ${players.length === 1 ? 'PLAYER' : 'PLAYERS'}`, team.owner_name?.trim()].filter(Boolean).join('   /   ');
+  const subtitle = `SQUAD   /   ${players.length} ${players.length === 1 ? 'PLAYER' : 'PLAYERS'}`;
   words(ctx, subtitle, 247, 259, 747, 22, '#394a61');
+  const leadershipPhotos = await Promise.all(leadership.map(person => portrait(person.photo)));
+  const columnWidth = Math.floor(972 / Math.max(1, leadership.length));
+  leadership.forEach((person, index) => {
+    const x = 54 + columnWidth * index;
+    const photo = leadershipPhotos[index];
+    box(ctx, x, 311, columnWidth - 8, 108, 14, ink);
+    picture(ctx, photo, initials(person.name!), x + 12, 323, 77, 84, 10);
+    photo?.close();
+    words(ctx, person.role, x + 103, 352, columnWidth - 122, 17, gold);
+    words(ctx, person.name!, x + 103, 389, columnWidth - 122, 31, '#ffffff', true);
+  });
   for (let offset = 0; offset < players.length; offset += 4) {
     await Promise.all(players.slice(offset, offset + 4).map(async (player, idx) => {
       const bitmap = await portrait(fileUrl(player, player.photo));
@@ -185,19 +203,19 @@ export async function renderTeamCard(team: Team, season: string, players: Player
       const row = Math.floor(i / columns);
       const rowCount = Math.min(columns, players.length - row * columns);
       const x = 54 + (columns - rowCount) * (tileWidth + 16) / 2 + i % columns * (tileWidth + 16);
-      const y = 322 + row * (tileHeight + 16);
+      const y = gridTop + row * (tileHeight + 16);
       const textHeight = tileWidth >= 400 ? 95 : 67;
       picture(ctx, bitmap, initials(player.name), x, y, tileWidth, tileHeight, 14);
       bitmap?.close();
       const strip = y + tileHeight - textHeight;
       box(ctx, x, strip, tileWidth, textHeight, 12, '#101a2c');
       box(ctx, x + 12, strip + 13, 3, textHeight - 26, 1, gold);
-      words(ctx, player.name, x + 24, strip + textHeight * .48, tileWidth - 38, tileWidth >= 400 ? 37 : 28, '#ffffff', true);
+      words(ctx, player.name + (player.id === team.captain ? ' (C)' : ''), x + 24, strip + textHeight * .48, tileWidth - 38, tileWidth >= 400 ? 37 : 28, '#ffffff', true);
       words(ctx, [player.role, player.batch && 'Batch ' + player.batch].filter(Boolean).join(' · '),
         x + 24, strip + textHeight * .79, tileWidth - 38, tileWidth >= 400 ? 20 : 14, pale);
     }));
   }
-  if (!players.length) words(ctx, 'Squad pending', 54, 400, 972, 42, pale, true);
+  if (!players.length) words(ctx, 'Squad pending', 54, gridTop + 78, 972, 42, pale, true);
   footer(ctx, height);
   return image;
 }

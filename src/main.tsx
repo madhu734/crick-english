@@ -9,7 +9,8 @@ import { Admin } from './admin';
 import { MatchAnalysis } from './match-analysis';
 import { GraphicCard, renderPlayerCard, renderTeamCard } from './graphic-cards';
 import { signedRuns } from './scoring';
-import { dateText, emptyTournament, fileUrl, matchPerformances, oversText, playerTotals, publicDb, readMatches, readTournament, runsPerOver, seasonPerformances, stageLabel, standings, strikeRate, timeText, type Tournament } from './data';
+import { dateText, emptyTournament, fileUrl, matchPerformances, oversText, playerTotals, publicDb, readMatches, readTournament, runsPerOver, seasonPerformances, stageLabel, standings, strikeRate, timeText, type Tournament, type Innings } from './data';
+import type { Performance } from './scoring';
 import { Avatar, BackLink, Badge, Crest, Empty, Layout, MatchCard, PageTitle, SiteLink } from './ui';
 import './style.css';
 
@@ -156,7 +157,7 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
     </section>}
     {squad ? <div className="two-col">{teams.map((team, index) => <section className="panel padded" key={team?.id ?? index}><h2>{team?.name ?? 'TBD'}</h2><PlayerList data={data} teamId={team?.id ?? ''} playersInMatch={match.scorecard?.playingSides?.find(side => side.team === team?.id)?.players} /></section>)}</div> :
       !match.scorecard ? <Empty title="Scorecard pending">Scores will appear once the match is scored.</Empty> : <>
-        {!!match.scorecard.recent?.length && <section className="panel padded recent"><h2>Recent balls</h2><div>{match.scorecard.recent.slice(-20).map((ball, i) => <span className={'ball ball-' + ball} key={i}>{ball}</span>)}</div>
+        {!!match.scorecard.recent?.length && <section className="panel padded recent"><h2>{match.scorecard.superOver ? 'Super Over recent balls' : 'Recent balls'}</h2><div>{match.scorecard.recent.slice(-20).map((ball, i) => <span className={'ball ball-' + ball} key={i}>{ball}</span>)}</div>
           {!!match.scorecard.currentBatters?.length && <p>Batting: {match.scorecard.currentBatters.map(key => playerName(key)).join(' · ')}</p>}
           {match.scorecard.currentBowler && <p>Bowling: {playerName(match.scorecard.currentBowler)}</p>}</section>}
         {match.status === 'live' && match.updated && <p className="updated"><RefreshCw size={14} /> Last update {timeText(match.updated)} Dhaka time</p>}
@@ -170,13 +171,50 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
             <h3>Bowling</h3><div className="table-wrap"><table><thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th></tr></thead><tbody>{rows.filter(row => row.balls_bowled || row.wickets || row.runs_conceded).map(row => <tr key={row.id}><td><SiteLink to={'/players/' + row.player}>{playerName(row.player)}</SiteLink></td><td>{oversText(row.balls_bowled)}</td><td>{row.runs_conceded}</td><td>{row.wickets}</td></tr>)}</tbody></table></div>
           </section>;
         })}</div> : <Empty title="Individual scorecard pending" />}
+        {match.scorecard.superOver && <section>
+          <h2>Super Over</h2>
+          <div className="two-col">{match.scorecard.superOver.innings.map(innings =>
+            <SuperOverInnings key={innings.team} innings={innings} figures={match.scorecard!.superOver!.playerStats}
+              teamName={teams.find(team => team?.id === innings.team)?.name ?? 'Team'} playerName={playerName} />)}</div>
+        </section>}
         <MatchAnalysis key={match.id} match={match} teams={data.teams} players={data.players} />
       </>}
   </div>;
 }
 
+function SuperOverInnings({ innings, figures, teamName, playerName }: {
+  innings: Innings; figures: Performance[]; teamName: string; playerName: (id: string) => string;
+}) {
+  const batters = figures.filter(row => row.team === innings.team && row.batted);
+  const bowlers = figures.filter(row => row.team !== innings.team && (row.balls_bowled || row.wickets || row.runs_conceded));
+  return <section className="panel padded">
+    <h3>{teamName} · {innings.runs}/{innings.wickets} ({oversText(innings.balls)} ov)</h3>
+    <div className="table-wrap"><table><thead><tr><th>Batter</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead>
+      <tbody>{batters.map(row => <tr key={row.player}><td><SiteLink to={'/players/' + row.player}>{playerName(row.player)}</SiteLink>{row.retired && <small>Retired</small>}</td>
+        <td>{row.runs}{row.not_out ? '*' : ''}</td><td>{row.balls_faced}</td><td>{row.fours}</td><td>{row.sixes}</td><td>{strikeRate(row.runs, row.balls_faced)}</td></tr>)}</tbody>
+    </table></div>
+    <p className="updated">Extras {innings.extras ?? 0}{!!innings.adjustedRuns && <> · Run adjustment {signedRuns(innings.adjustedRuns)}</>}</p>
+    <div className="table-wrap"><table><thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th></tr></thead>
+      <tbody>{bowlers.map(row => <tr key={row.player}><td><SiteLink to={'/players/' + row.player}>{playerName(row.player)}</SiteLink></td>
+        <td>{oversText(row.balls_bowled)}</td><td>{row.runs_conceded}</td><td>{row.wickets}</td></tr>)}</tbody>
+    </table></div>
+  </section>;
+}
+
 function TeamsPage({ data }: { data: Tournament }) {
+  const [search, setSearch] = useState('');
+  const query = search.trim().toLowerCase();
+  const matches = query ? data.players.filter(player => player.name.toLowerCase().includes(query) || player.batch === query) : [];
   return <div className="shell page"><PageTitle kicker={data.season?.name} title="Teams & Players" />
+    <section className="panel padded player-search">
+      <label htmlFor="player-search">Find a player</label>
+      <input id="player-search" type="search" value={search} onChange={event => setSearch(event.currentTarget.value)} placeholder="Name or batch number" />
+      {query && (matches.length ? <ul className="row-list">{matches.map(player => <li key={player.id}>
+        <SiteLink to={'/players/' + player.id}><Avatar player={player} /><div><strong>{player.name}</strong>
+          <small>{[data.teams.find(team => team.id === player.team)?.name, player.batch && 'Batch ' + player.batch].filter(Boolean).join(' · ')}</small>
+        </div><ChevronRight size={17} /></SiteLink>
+      </li>)}</ul> : <p role="status">No players found.</p>)}
+    </section>
     {data.teams.length ? <div className="team-grid">{data.teams.map(team => <SiteLink to={'/teams/' + team.id} className="team-tile panel" key={team.id}><Crest team={team} /><div><h2>{team.name}</h2><p>{data.players.filter(player => player.team === team.id).length + ' players'}</p></div><ChevronRight size={19} /></SiteLink>)}</div> : <Empty title="Teams will appear here once added" />}
     {data.players.some(player => !player.team) && <section className="panel padded unassigned-players"><h2>Unassigned players</h2><PlayerList data={data} teamId="" /></section>}
   </div>;

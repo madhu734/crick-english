@@ -5,6 +5,7 @@ import { Avatar, Crest, Empty, PageTitle } from './ui';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ScoreAdmin } from './score-admin';
 import { CompactSelect } from './compact-select';
+import { MATCH_OVERS } from './scoring';
 
 type Section = 'matches' | 'teams' | 'players';
 type Option = { value: string; label: string };
@@ -96,7 +97,6 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
       { name: 'team_b', label: 'Team B', options: teamOptions, required: true },
       { name: 'starts_at', label: 'Date and time (Dhaka)', type: 'datetime-local', required: true },
       { name: 'stage', label: 'Stage', options: Object.entries(stageLabel).filter(([value]) => value !== 'group').map(([value, label]) => option(value, label)), required: true },
-      { name: 'overs', label: 'Overs per innings', type: 'number', min: 1, max: 50, required: true },
       { name: 'published', label: 'Show on the public website', type: 'checkbox' },
     ],
     teams: [
@@ -120,7 +120,7 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
   const record = records.find(item => item.id === editing);
   const currentMatch = section === 'matches' ? record as Match | undefined : undefined;
   const scored = !!currentMatch && (currentMatch.status !== 'scheduled' || !!currentMatch.scorecard);
-  const fields = fieldsBySection[section].filter(field => !scored || !['team_a', 'team_b', 'stage', 'overs'].includes(field.name));
+  const fields = fieldsBySection[section].filter(field => !scored || !['team_a', 'team_b', 'stage'].includes(field.name));
   if (currentMatch?.status === 'completed') {
     const lineups = currentMatch.scorecard?.playingSides;
     const participants = new Set(lineups?.flatMap(side => side.players));
@@ -168,6 +168,7 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
       } else if (trimmed || field.type !== 'number') payload.append(field.name, trimmed);
     }
     if (section === 'matches' && raw.has('team_a') && raw.get('team_a') === raw.get('team_b')) { setError('Choose two different teams.'); return; }
+    if (section === 'matches' && !scored) payload.append('overs', String(MATCH_OVERS));
     if (!record && (section === 'teams' || section === 'matches')) {
       if (!data.season) { setError('Create an active season first.'); return; }
       payload.append('season', data.season.id);
@@ -228,7 +229,7 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
           return <label key={field.name}>{field.label}
             {field.type === 'file' ? <><input type="file" name={field.name} accept="image/jpeg,image/png,image/webp,image/avif" />{value && record && <div className="admin-current-image">{section === 'players' ? <Avatar player={record as Player} /> : <Crest team={record as Team} />}<small>Current image is kept unless replaced.</small></div>}</> :
               <input name={field.name} type={field.type ?? 'text'} required={field.required} maxLength={field.maxLength} min={field.min} max={field.max} defaultValue={
-                field.type === 'datetime-local' ? date : String(value || (field.name === 'overs' ? 10 : field.type === 'color' ? '#547cb9' : ''))} />}
+                field.type === 'datetime-local' ? date : String(value || (field.type === 'color' ? '#547cb9' : ''))} />}
           </label>;
         })}
         <div className="form-actions"><button className="button primary" disabled={!online || saving}>{saving ? 'Saving…' : 'Save'}</button><button className="quiet" type="button" disabled={saving} onClick={() => setEditing(null)}>Cancel</button></div>

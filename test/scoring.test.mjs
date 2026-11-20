@@ -9,6 +9,27 @@ const start = (plays = [], overs = 2) => ({
 const ball = (kind, runType, runs, wicket) => ({type:'ball',delivery:{kind,runType,runs,wicket}});
 const names = { a:'Team A', b:'Team B' };
 
+test('a tied match can finalize directly or use separate Super Over scoring', () => {
+  const opening = { striker: 'b1', partner: 'b2', bowler: 'a1' };
+  const close = { type: 'closeInnings' };
+  const log = start([quickBall(4), close], 14);
+  const openingInnings = { team: 'b', opening, plays: [quickBall(4), close] };
+  log.innings.push(openingInnings);
+  assert.equal(publishScore({ ...log, outcome: 'final' }, names).winner, '');
+  const superOpening = { ...openingInnings, plays: Array.from({length: 6}, () => quickBall(1)) };
+  const superChase = { ...log.innings[0], plays: [quickBall(6), quickBall(1)] };
+  assert.throws(() => scoreMatch({ ...log, superOver: [superOpening], outcome: 'final' }), /Finish the chase/);
+  assert.throws(() => scoreMatch({ ...log, superOver: [{...superOpening, plays: [...superOpening.plays, quickBall(1)]}] }), /already finished/);
+  assert.throws(() => scoreMatch({ ...log, innings: [log.innings[0]], superOver: [superOpening] }), /tied match/);
+  const result = publishScore({ ...log, superOver: [superOpening, superChase], outcome: 'final' }, names);
+  assert.equal(result.winner, 'a');
+  assert.deepEqual(result.scorecard.innings.map(i => i.runs), [4, 4]);
+  assert.deepEqual(result.scorecard.superOver.innings.map(i => [i.runs, i.quota]), [[6, 1], [7, 1]]);
+  assert.equal(result.scorecard.playerStats.find(row => row.player === 'a1').runs, 4);
+  const anotherTie = { ...superChase, plays: [quickBall(6), close] };
+  assert.equal(publishScore({ ...log, superOver: [superOpening, anotherTie], outcome: 'final' }, names).winner, '');
+});
+
 test('wides, no-balls and byes are attributed to the correct totals and ends', () => {
   const { active, players } = scoreMatch(start([
     ball('wide','bat',1),

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ChevronLeft, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { oversText, staffDb, type Match, type Tournament } from './data';
-import { deliveryLabel, signedRuns, dismissals, publishScore, quickBall, scoreMatch, type Delivery, type Dismissal, type InningsState, type Lineup, type MatchLog, type Opening, type Play } from './scoring';
+import { deliveryLabel, signedRuns, dismissals, publishScore, quickBall, scoreMatch, MATCH_OVERS, MAX_PLAYERS, type Delivery, type Dismissal, type InningsLog, type InningsState, type Lineup, type MatchLog, type Opening, type Play } from './scoring';
 import { Avatar, Crest, Empty } from './ui';
 import { CompactSelect } from './compact-select';
 
@@ -74,9 +74,14 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
   const [error, setError] = useState('');
   const [details, setDetails] = useState<'wide' | 'noBall' | 'byes' | 'wicketMenu' | 'wicket' | 'replaceBatter' | 'endEarly' | 'adjustment' | number | null>(null);
   const [confirm, setConfirm] = useState<'noResult' | 'reopen' | 'previous' | null>(null);
+  const [superBatting, setSuperBatting] = useState('');
   const names = Object.fromEntries(data.teams.map(team => [team.id, team.name]));
   const playerName = (player: string) => data.players.find(item => item.id === player)?.name ?? 'Player';
   const log = match?.scoring;
+  const entries = log?.superOver ?? log?.innings ?? [];
+  const quota = log?.superOver ? 1 : log?.overs ?? MATCH_OVERS;
+  const withEntries = (current: MatchLog, innings: InningsLog[]): MatchLog =>
+    current.superOver ? { ...current, superOver: innings } : { ...current, innings };
   let score: ReturnType<typeof scoreMatch> | undefined;
   let invalid = '';
   try { if (log) score = scoreMatch(log); }
@@ -85,7 +90,7 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
   async function save(next: MatchLog) {
     setError('');
     try {
-      if (await onSave(next)) { setDetails(null); setConfirm(null); }
+      if (await onSave(next)) { setDetails(null); setConfirm(null); setSuperBatting(''); }
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'Could not save the score.');
     }
@@ -93,20 +98,20 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
 
   function add(play: Play) {
     if (!log || log.outcome) return;
-    const innings = log.innings.map((item, index) => index === log.innings.length - 1 ? { ...item, plays: [...item.plays, play] } : item);
-    void save({ ...log, innings });
+    const innings = entries.map((item, index) => index === entries.length - 1 ? { ...item, plays: [...item.plays, play] } : item);
+    void save(withEntries(log, innings));
   }
 
   function undo() {
     if (!log || log.outcome) return;
-    const index = log.innings.length - 1;
-    if (!log.innings[index].plays.length) return;
-    void save({ ...log, innings: log.innings.map((item, n) => n === index ? { ...item, plays: item.plays.slice(0, -1) } : item) });
+    const index = entries.length - 1;
+    if (!entries[index].plays.length) return;
+    void save(withEntries(log, entries.map((item, n) => n === index ? { ...item, plays: item.plays.slice(0, -1) } : item)));
   }
 
   function correct(index: number, delivery: Delivery) {
     if (!log || log.outcome || !score) return;
-    const current = log.innings[log.innings.length - 1];
+    const current = entries[entries.length - 1];
     const original = current.plays[index];
     if (original?.type !== 'ball' || original.delivery.wicket || delivery.wicket) return;
     const editsFollow = current.plays.slice(index + 1).some(play => play.type !== 'adjustRuns' && play.type !== 'closeInnings');
@@ -116,14 +121,14 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
       return;
     }
     const plays = current.plays.map((entry, n): Play => n === index ? { type: 'ball', delivery } : entry);
-    void save({ ...log, innings: [...log.innings.slice(0, -1), { ...current, plays }] });
+    void save(withEntries(log, [...entries.slice(0, -1), { ...current, plays }]));
   }
 
   const active = score?.active;
   const playing = log?.lineups.find(side => side.team === active?.team);
   const fielding = log?.lineups.find(side => side.team !== active?.team);
   const nextBatters = active?.availableBatters ?? [];
-  const currentLog = log?.innings[log.innings.length - 1];
+  const currentLog = entries[entries.length - 1];
   const deliveryRows = new Map(active?.deliveries.map(row => [row.index, row]));
   const logEntries = currentLog?.plays.map((play, index) => ({ play, index }))
     .filter(({ play }) => play.type !== 'swap' && play.type !== 'bowler').reverse() ?? [];
@@ -141,7 +146,7 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
     setDetails(null);
     setError('');
   }
-  const statusLabel = log?.outcome === 'final' ? 'Final result' : log?.outcome === 'noResult' ? 'No result' : active?.done ? (log?.innings.length === 1 ? 'Innings break' : 'Ready to finalize') : 'Live';
+  const statusLabel = log?.outcome === 'final' ? 'Final result' : log?.outcome === 'noResult' ? 'No result' : active?.done ? (entries.length === 1 ? 'Innings break' : 'Ready to finalize') : 'Live';
 
   const wicketOpen = details === 'wicketMenu' || details === 'wicket' || details === 'replaceBatter';
   function toggleDetails(mode: 'wide' | 'noBall' | 'byes' | 'wicketMenu') {
@@ -172,16 +177,32 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
           })}
           {match.scorecard?.result && <p className="score-result">{match.scorecard.result}</p>}
         </div>
+        {score.superOver && <section className="panel padded"><h2>Super Over</h2>
+          {score.superOver.innings.map(innings => <p key={innings.team}>{names[innings.team]} · {innings.runs}/{innings.wickets} ({oversText(innings.balls)} ov)</p>)}
+        </section>}
         {log.outcome ? <div className="panel padded scoring-actions"><button className="quiet" disabled={saving} onClick={() => setConfirm('reopen')}>Reopen for correction</button></div> :
           <div className="two-col scorer-grid">
             <section className="panel padded scorer-controls">
-              {active.done ? log.innings.length === 1 ? <>
-                <h2>Start the chase</h2>
-                <OpeningForm batting={fielding} fielding={playing} playerName={playerName} disabled={saving || logFormOpen} action="Start second innings"
-                  onOpen={opening => save({ ...log, innings: [...log.innings, { team: fielding.team, opening, plays: [] }] })} />
+              {active.done ? entries.length === 1 ? <>
+                <h2>{log.superOver ? 'Start the Super Over chase' : 'Start the chase'}</h2>
+                <OpeningForm key={playing.team + ':chase'} batting={fielding} fielding={playing} playerName={playerName} disabled={saving || logFormOpen} action="Start second innings"
+                  onOpen={opening => save(withEntries(log, [...entries, { team: fielding.team, opening, plays: [] }]))} />
               </> : <>
                 <h2>Review result</h2><p>{match.scorecard?.result}</p>
-                <button className="button primary" disabled={saving || logFormOpen} onClick={() => save({ ...log, outcome: 'final' })}>Finalize result</button>
+                <div className="scoring-actions">
+                  <button className="button primary" disabled={saving || logFormOpen} onClick={() => save({ ...log, outcome: 'final' })}>
+                    {!score.superOver && score.tied ? 'Finalize as tie' : 'Finalize result'}
+                  </button>
+                  {!score.superOver && score.tied && !superBatting &&
+                    <button className="quiet" disabled={saving || logFormOpen} onClick={() => setSuperBatting(playing.team)}>Set up Super Over</button>}
+                </div>
+                {!score.superOver && score.tied && superBatting && <>
+                  <CompactSelect label="Super Over batting first" value={superBatting} onChange={setSuperBatting} disabled={saving}
+                    options={log.lineups.map(side => ({ value: side.team, label: names[side.team] }))} />
+                  <OpeningForm key={superBatting} batting={log.lineups.find(side => side.team === superBatting)!}
+                    fielding={log.lineups.find(side => side.team !== superBatting)!} playerName={playerName} action="Start Super Over"
+                    disabled={saving || logFormOpen} onOpen={opening => save({ ...log, superOver: [{ team: superBatting, opening, plays: [] }] })} />
+                </>}
               </> : <>
                 <h2>Enter delivery</h2>
                 <dl className="crease">
@@ -191,7 +212,7 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
                     ['Bowler', active.bowler, 'crease-bowler'],
                   ] as const).map(([role, id, className]) => {
                     const player = data.players.find(row => row.id === id);
-                    const figures = score.players.find(row => row.player === id);
+                    const figures = (score.superOver?.players ?? score.players).find(row => row.player === id);
                     const bowling = role === 'Bowler';
                     const runs = bowling ? figures?.runs_conceded : figures?.runs;
                     const balls = bowling ? figures?.balls_bowled : figures?.balls_faced;
@@ -234,13 +255,13 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
                   onSave={delivery => add({ type: 'ball', delivery })} />}
               {wicketFormOpen && !active.done &&
                 <DeliveryForm active={active} playerName={playerName} nextBatters={nextBatters}
-                  wicket error={formError} lastBall={active.balls === log.overs * 6 - 1}
+                  wicket error={formError} lastBall={active.balls === quota * 6 - 1}
                   disabled={saving} onCancel={closeDetails} onSave={delivery => add({ type: 'ball', delivery })} />}
               <div className="scoring-actions">
                 {!active.done && <button className="quiet" disabled={saving || details !== null} onClick={() => add({ type: 'swap' })}>Swap strike</button>}
                 {!active.done && active.bowler && <button className="quiet" disabled={saving} aria-expanded={details === 'byes'} onClick={() => toggleDetails('byes')}>Byes</button>}
                 <button className="quiet" disabled={saving || !currentLog.plays.length || details !== null} onClick={undo}><RotateCcw size={15} /> Undo last entry</button>
-                {log.innings.length === 2 && !currentLog.plays.length && <button className="quiet" disabled={saving || logFormOpen} onClick={() => setConfirm('previous')}>Return to first innings</button>}
+                {(entries.length === 2 || log.superOver) && !currentLog.plays.length && <button className="quiet" disabled={saving || logFormOpen} onClick={() => setConfirm('previous')}>{log.superOver && entries.length === 1 ? 'Cancel Super Over' : 'Return to first innings'}</button>}
                 {!score.canFinalize && <button className="quiet" disabled={saving || logFormOpen} onClick={() => setConfirm('noResult')}>Mark no result</button>}
               </div>
             </section>
@@ -275,7 +296,7 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
                     onClick={() => showLogForm('adjustment')}>Run adjustment / penalty</button>
                 </div>
                 {details === 'endEarly' && <div className="innings-tool-form" role="group" aria-label="End innings early">
-                  <p>{log.innings.length === 1 ? 'End this innings at its current score and set the target for the chase?' :
+                  <p>{entries.length === 1 ? 'End this innings at its current score and set the target for the chase?' :
                     'End the chase at its current score and review the result?'}</p>
                   {formError && <p className="error" role="alert">{formError}</p>}
                   <div className="form-actions">
@@ -290,10 +311,10 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
           </div>}
         {confirm && <div className="panel padded scoring-confirm" role="group" aria-label="Confirm score change">
           <p>{confirm === 'reopen' ? 'Reopen this result for scoring corrections? The points table will update when you finalize it again.' :
-            confirm === 'previous' ? 'Return to the first innings? You can set up the chase again after making corrections.' :
+            confirm === 'previous' ? (log.superOver && entries.length === 1 ? 'Cancel Super Over setup and return to the tied result?' : 'Return to the first innings? You can set up the chase again after making corrections.') :
             'Close this match as no result?'}</p>
           <div className="scoring-actions"><button className="button primary" disabled={saving} onClick={() => {
-            if (confirm === 'previous') void save({ ...log, innings: log.innings.slice(0, 1) });
+            if (confirm === 'previous') void save(log.superOver && entries.length === 1 ? { ...log, superOver: undefined } : withEntries(log, entries.slice(0, 1)));
             else void save({ ...log, outcome: confirm === 'reopen' ? undefined : 'noResult' });
           }}>Confirm</button><button className="quiet" disabled={saving} onClick={() => setConfirm(null)}>Cancel</button></div>
         </div>}
@@ -351,19 +372,19 @@ function MatchSetup({ match, data, disabled, start }: { match: Match; data: Tour
   const teamIds = [match.team_a, match.team_b];
   const [battingTeam, setBattingTeam] = useState(teamIds[0]);
   const [lineups, setLineups] = useState<[Lineup, Lineup]>(() => [match.team_a, match.team_b].map(team => ({
-    team, players: data.players.filter(player => player.team === team).map(player => player.id).slice(0, 11),
+    team, players: data.players.filter(player => player.team === team).map(player => player.id).slice(0, MAX_PLAYERS),
   })) as [Lineup, Lineup]);
   const batting = lineups.find(side => side.team === battingTeam)!;
   const fielding = lineups.find(side => side.team !== battingTeam)!;
   const playerName = (id: string) => data.players.find(player => player.id === id)?.name ?? 'Player';
-  const valid = lineups[0].players.length === lineups[1].players.length && lineups[0].players.length >= 2 && lineups[0].players.length <= 11;
+  const valid = lineups[0].players.length === lineups[1].players.length && lineups[0].players.length >= 2 && lineups[0].players.length <= MAX_PLAYERS;
   return <div className="two-col scorer-grid">
     <section className="panel padded"><h2>Playing squads</h2>
       <p className="updated">Any selected player can bat or bowl.</p>
       <div className="two-col">{lineups.map((side, index) => <fieldset className="lineup-checks" key={side.team}>
         <legend>{data.teams.find(team => team.id === side.team)?.name} ({side.players.length})</legend>
         {data.players.filter(player => player.team === side.team).map(({ id: player }) => <label key={player}>
-          <input type="checkbox" checked={side.players.includes(player)} disabled={disabled} onChange={event => {
+          <input type="checkbox" checked={side.players.includes(player)} disabled={disabled || (side.players.length >= MAX_PLAYERS && !side.players.includes(player))} onChange={event => {
             const next: [Lineup, Lineup] = [...lineups];
             next[index] = { ...side, players: event.target.checked ? [...side.players, player] : side.players.filter(id => id !== player) };
             setLineups(next);
@@ -377,7 +398,7 @@ function MatchSetup({ match, data, disabled, start }: { match: Match; data: Tour
         options={lineups.map(side => ({ value: side.team, label: data.teams.find(team => team.id === side.team)?.name ?? 'Team' }))} />
       <OpeningForm key={battingTeam + ':' + lineups.map(side => side.players.join(',')).join(':')} batting={batting} fielding={fielding}
         playerName={playerName} action="Start match" disabled={disabled || !valid}
-        onOpen={opening => start({ version: 1, overs: match.overs, lineups, innings: [{ team: battingTeam, opening, plays: [] }] })} />
+        onOpen={opening => start({ version: 1, overs: MATCH_OVERS, lineups, innings: [{ team: battingTeam, opening, plays: [] }] })} />
     </section>
   </div>;
 }

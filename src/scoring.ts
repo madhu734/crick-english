@@ -16,7 +16,10 @@ export type Opening = { striker: string; partner: string; bowler: string };
 export type InningsLog = { team: string; opening: Opening; plays: Play[] };
 export type MatchLog = {
   version: 1; overs: number; lineups: [Lineup, Lineup]; innings: InningsLog[]; outcome?: 'final' | 'noResult';
+  superOver?: InningsLog[];
 };
+export const MATCH_OVERS = 14;
+export const MAX_PLAYERS = 11;
 export type Performance = {
   player: string; team: string; runs: number; balls_faced: number; fours: number; sixes: number;
   wickets: number; balls_bowled: number; runs_conceded: number; batted: boolean; not_out: boolean; retired?: boolean;
@@ -185,11 +188,11 @@ function replayInnings(log: InningsLog, batting: Lineup, fielding: Lineup, overs
   return state;
 }
 
-export function scoreMatch(log: MatchLog) {
+function scoreInningsPair(log: MatchLog) {
   requireRule(log.version === 1 && Number.isInteger(log.overs) && log.overs >= 1 && log.overs <= 50, 'Invalid match format.');
   const [a, b] = log.lineups;
   const everyone = [...a.players, ...b.players];
-  requireRule(a.team !== b.team && a.players.length === b.players.length && a.players.length >= 2 && a.players.length <= 11 &&
+  requireRule(a.team !== b.team && a.players.length === b.players.length && a.players.length >= 2 && a.players.length <= MAX_PLAYERS &&
     new Set(everyone).size === everyone.length, 'Choose equal playing sides with 2–11 distinct players per team.');
   requireRule(log.innings.length === 1 || log.innings.length === 2, 'A match needs one or two innings.');
   const figures = new Map<string, Performance>();
@@ -208,11 +211,29 @@ export function scoreMatch(log: MatchLog) {
     innings.push(replayInnings(entry, batting, fielding, log.overs, first ? first.runs + 1 : undefined, figures));
   }
   const [first, second] = innings;
-  requireRule(log.outcome !== 'final' || second?.done, 'Finish the chase before finalizing.');
-  const winner = log.outcome !== 'noResult' && second?.done ? second.runs > first.runs ? second.team :
+  const winner = second?.done ? second.runs > first.runs ? second.team :
     second.runs < first.runs ? first.team : '' : '';
   const active = innings[innings.length - 1];
   return { innings, active, players: [...figures.values()], winner, canFinalize: !!second?.done };
+}
+
+export function scoreMatch(log: MatchLog) {
+  const regulation = scoreInningsPair(log);
+  const tied = regulation.canFinalize && !regulation.winner;
+  requireRule(!log.superOver || tied, 'A Super Over can only follow a tied match.');
+  const superOver = log.superOver && scoreInningsPair({
+    ...log, innings: log.superOver, overs: 1,
+  });
+  const deciding = superOver ?? regulation;
+  requireRule(log.outcome !== 'final' || deciding.canFinalize, 'Finish the chase before finalizing.');
+  return {
+    ...regulation,
+    active: deciding.active,
+    winner: log.outcome === 'noResult' ? '' : deciding.winner,
+    canFinalize: deciding.canFinalize,
+    tied,
+    superOver,
+  };
 }
 
 export function publishScore(log: MatchLog, names: Record<string, string>) {
@@ -220,7 +241,7 @@ export function publishScore(log: MatchLog, names: Record<string, string>) {
   const [first, second] = result.innings;
   let message: string | undefined;
   if (log.outcome === 'noResult') message = 'No result.';
-  else if (second) {
+  else if (second && !result.superOver) {
     if (!second.done) {
       const needed = first.runs + 1 - second.runs;
       const remaining = log.overs * 6 - second.balls;
@@ -233,15 +254,28 @@ export function publishScore(log: MatchLog, names: Record<string, string>) {
       message = names[result.winner] + ' won by ' + margin + (chasing ? (margin === 1 ? ' wicket.' : ' wickets.') : (margin === 1 ? ' run.' : ' runs.'));
     }
   } else if (first.done) message = 'Innings break · Target ' + (first.runs + 1);
+  if (result.superOver && log.outcome !== 'noResult') {
+    const [opening, chase] = result.superOver.innings;
+    if (!opening.done) message = 'Super Over in progress.';
+    else if (!chase) message = 'Super Over innings break · Target ' + (opening.runs + 1);
+    else if (!chase.done) message = names[chase.team] + ' need ' + (opening.runs + 1 - chase.runs) + ' from ' + (6 - chase.balls) + ' in the Super Over.';
+    else message = result.winner ? names[result.winner] + ' won the Super Over.' : 'Super Over tied. Match tied.';
+  }
+  const summarize = (innings: InningsState, quota: number) => ({
+    team: innings.team, runs: innings.runs, wickets: innings.wickets, balls: innings.balls, allOut: innings.allOut,
+    quota, endedEarly: innings.endedEarly, adjustedRuns: innings.adjustedRuns,
+    extras: Object.values(innings.extras).reduce((total, runs) => total + runs, 0), extrasBreakdown: innings.extras,
+  });
   const active = !result.active.done && !log.outcome ? result.active : undefined;
   return {
     status: log.outcome === 'final' ? 'completed' as const : log.outcome === 'noResult' ? 'abandoned' as const : 'live' as const,
     winner: log.outcome === 'final' ? result.winner : '',
     scorecard: {
-      innings: result.innings.map(innings => ({
-        team: innings.team, runs: innings.runs, wickets: innings.wickets, balls: innings.balls, allOut: innings.allOut,
-        quota: log.overs, endedEarly: innings.endedEarly, adjustedRuns: innings.adjustedRuns, extras: Object.values(innings.extras).reduce((total, runs) => total + runs, 0), extrasBreakdown: innings.extras,
-      })),
+      innings: result.innings.map(innings => summarize(innings, log.overs)),
+      ...(result.superOver ? { superOver: {
+        innings: result.superOver.innings.map(innings => summarize(innings, 1)),
+        playerStats: result.superOver.players,
+      }} : {}),
       recent: result.active.deliveries.slice(-20).map(entry => entry.label),
       currentBatters: active ? [active.striker, active.partner] : [],
       currentBowler: active?.bowler ?? '',

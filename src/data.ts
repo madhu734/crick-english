@@ -12,7 +12,7 @@ export type Player = RecordModel & { name: string; batch: string; role: typeof p
 export type Stage = 'league' | 'group' | 'semifinal' | 'final' | 'friendly';
 export type Status = 'scheduled' | 'live' | 'completed' | 'abandoned';
 export type Innings = { team: string; runs: number; wickets: number; balls: number; allOut?: boolean; quota?: number; extras?: number; endedEarly?: boolean; adjustedRuns?: number };
-export type Scorecard = { innings: Innings[]; result?: string; recent?: string[]; currentBatters?: string[]; currentBowler?: string; playingSides?: Lineup[]; playerStats?: Performance[] };
+export type Scorecard = { innings: Innings[]; result?: string; recent?: string[]; currentBatters?: string[]; currentBowler?: string; playingSides?: Lineup[]; playerStats?: Performance[]; superOver?: { innings: Innings[]; playerStats: Performance[] } };
 export type Match = RecordModel & {
   season: string; team_a: string; team_b: string; starts_at: string; stage: Stage;
   overs: number; status: Status; published: boolean; winner: string; scorecard: Scorecard | null; updated: string;
