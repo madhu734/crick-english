@@ -18,7 +18,7 @@ const option = (value: string, label: string): Option => ({ value, label });
 function ScorerAppDownload() {
   return <aside className="panel scorer-download">
     <div><strong>Scorer app for Android</strong><p>Download the app to score matches on your phone.</p></div>
-    <a className="button primary" href="https://github.com/madhu734/crick-english/releases/download/scorer-v1.6/Crick-English-Scorer-1.6.apk"><Download size={17} /> Download APK</a>
+    <a className="button primary" href="https://github.com/madhu734/crick-english/releases/latest/download/Crick-English-Scorer.apk"><Download size={17} /> Download APK</a>
   </aside>;
 }
 
@@ -106,6 +106,9 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
       { name: 'logo', label: 'Team logo', type: 'file' },
       { name: 'owner_name', label: 'Owner name', maxLength: 150 },
       { name: 'owner_photo', label: 'Owner photo', type: 'file' },
+      { name: 'manager_name', label: 'Manager name', maxLength: 150 },
+      { name: 'manager_photo', label: 'Manager photo', type: 'file' },
+      { name: 'captain', label: 'Captain', options: data.players.filter(player => player.team === editing).map(player => option(player.id, player.name)) },
     ],
     players: [
       { name: 'name', label: 'Player name', required: true, maxLength: 100 }, { name: 'batch', label: 'Batch', maxLength: 40 },
@@ -143,6 +146,12 @@ export function TournamentAdmin({ data, refresh, onSignOut, loadError = '', mobi
     if (!online || (mobile && !navigator.onLine)) { setError('Reconnect to PocketBase to save changes.'); return; }
     if (!validSession()) { setError('Could not authenticate with PocketBase. Reconnect and try again.'); onSignOut?.(); return; }
     const raw = new FormData(event.currentTarget);
+    if (section === 'teams' && raw.get('captain') && !data.players.some(player => player.id === raw.get('captain') && player.team === editing)) {
+      setError('Choose a captain from this team’s squad.'); return;
+    }
+    if (section === 'players' && record && raw.get('team') !== (record as Player).team && data.teams.some(team => team.captain === record.id)) {
+      setError('Change or clear this player’s captain assignment before moving them to another team.'); return;
+    }
     const payload = new FormData();
     for (const field of fields) {
       const value = raw.get(field.name);

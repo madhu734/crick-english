@@ -221,6 +221,9 @@
     "name": "ce_teams",
     "type": "base",
     "fields": [
+      {"autogeneratePattern":"","help":"","hidden":false,"id":"text1479203967","max":150,"min":0,"name":"manager_name","pattern":"","presentable":false,"primaryKey":false,"required":false,"system":false,"type":"text"},
+      {"help":"","hidden":false,"id":"file1030243362","maxSelect":1,"maxSize":3145728,"mimeTypes":["image/jpeg","image/png","image/webp","image/avif"],"name":"manager_photo","presentable":false,"protected":false,"required":false,"system":false,"thumbs":["256x256"],"type":"file"},
+      {"cascadeDelete":false,"collectionId":"ce0000000000004","help":"","hidden":false,"id":"relation2922757979","maxSelect":1,"minSelect":0,"name":"captain","presentable":false,"required":false,"system":false,"type":"relation"},
       {
         "autogeneratePattern": "[a-z0-9]{15}",
         "help": "",

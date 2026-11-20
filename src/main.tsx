@@ -195,6 +195,11 @@ function TeamPage({ data }: { data: Tournament }) {
       <div><small>TEAM OWNER</small><strong>{team.owner_name?.trim() || 'Team owner'}</strong></div>
     </section>}
     <GraphicCard key={team.id} name={team.name} kind="Team" render={() => renderTeamCard(team, data.season?.name ?? '', data.players.filter(player => player.team === team.id))} />
+    {team.captain && data.players.filter(player => player.id === team.captain && player.team === team.id).map(player => <section className="panel team-owner" key={player.id}><Avatar player={player} /><div><small>TEAM CAPTAIN</small><SiteLink to={'/players/' + player.id}><strong>{player.name}</strong></SiteLink></div></section>)}
+    {(team.manager_name?.trim() || team.manager_photo) && <section className="panel team-owner">
+      {team.manager_photo && <img src={fileUrl(team, team.manager_photo)} alt="Team manager" loading="lazy" />}
+      <div><small>TEAM MANAGER</small><strong>{team.manager_name?.trim() || 'Team manager'}</strong></div>
+    </section>}
     <div className="two-col"><section className="panel padded"><h2>Squad</h2><PlayerList data={data} teamId={team.id} /></section>
     <section><div className="section-heading"><h2>Matches</h2></div><div className="stack">{matches.length ? matches.map(match => <MatchCard match={match} teams={data.teams} key={match.id} />) : <Empty title="No fixtures yet" />}</div></section></div>
   </div>;
