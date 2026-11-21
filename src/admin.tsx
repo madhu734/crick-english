@@ -14,6 +14,7 @@ const sections: [Section, string, string][] = [
   ['matches', 'Matches', 'match'], ['teams', 'Teams', 'team'], ['players', 'Players', 'player'],
 ];
 const validSession = () => staffDb.authStore.isValid && staffDb.authStore.record?.collectionName === 'ce_staff' && staffDb.authStore.record?.role === 'admin';
+const adminEmail = 'crickenglish@gmail.com';
 const option = (value: string, label: string): Option => ({ value, label });
 
 function ScorerAppDownload() {
@@ -52,9 +53,9 @@ export function Admin() {
     const fields = new FormData(event.currentTarget);
     setSaving(true); setError('');
     try {
-      await staffDb.collection('ce_staff').authWithPassword(String(fields.get('email')), String(fields.get('password')));
+      await staffDb.collection('ce_staff').authWithPassword(adminEmail, String(fields.get('password')));
       if (!validSession()) { staffDb.authStore.clear(); setError('This account needs committee admin access.'); }
-    } catch { setError('Could not sign in. Check your committee email and password.'); }
+    } catch { setError('Could not sign in. Check your password.'); }
     finally { setSaving(false); }
   }
 
@@ -64,7 +65,6 @@ export function Admin() {
   }
 
   if (!signedIn) return <div className="shell page narrow"><PageTitle title="Committee login" /><form className="panel padded login" onSubmit={login}>
-    <label>Committee email<input type="email" name="email" autoComplete="username" required /></label>
     <label>Password<input type="password" name="password" autoComplete="current-password" required /></label>
     {error && <p className="error" role="alert">{error}</p>}
     <button className="button primary" disabled={saving}><ShieldCheck size={17} /> {saving ? 'Signing in…' : 'Sign in'}</button>
