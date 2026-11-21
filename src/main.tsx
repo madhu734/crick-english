@@ -78,7 +78,7 @@ function Home({ data, loading }: { data: Tournament; loading: boolean }) {
   const mode = search.get('show');
   const filtered = mode === 'fixtures' ? data.matches.filter(match => match.status === 'scheduled') :
     mode === 'results' ? data.matches.filter(match => ['completed', 'abandoned'].includes(match.status)) :
-    [...data.matches].sort((a, b) => Number(b.status === 'live') - Number(a.status === 'live'));
+    data.matches.filter(match => match.status !== 'scheduled').sort((a, b) => Number(b.status === 'live') - Number(a.status === 'live'));
   function filter(value: string) {
     const next = new URLSearchParams(search);
     if (value) next.set('show', value); else next.delete('show');
@@ -98,7 +98,7 @@ function Home({ data, loading }: { data: Tournament; loading: boolean }) {
             <button key={label} type="button" aria-pressed={(mode ?? '') === value} onClick={() => filter(value)}>{label}</button>)}
         </div></div>
         {filtered.length ? <div className="match-grid">{filtered.map(match => <MatchCard key={match.id} match={match} teams={data.teams} />)}</div> :
-          <Empty title={loading ? 'Loading matches…' : mode === 'results' ? 'No results yet' : 'No fixtures published yet'}>{!loading && <>Published matches will appear here.</>}</Empty>}
+          <Empty title={loading ? 'Loading matches…' : mode === 'fixtures' ? 'No upcoming fixtures' : mode === 'results' ? 'No results yet' : 'No matches started yet'}>{!loading && mode !== 'fixtures' && <>Upcoming matches are in Fixtures.</>}</Empty>}
       </section>
       <aside className="home-side">
         <div className="section-heading"><h2>Standings</h2></div>

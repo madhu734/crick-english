@@ -78,7 +78,7 @@ export function matchPerformances(match: Match, legacy: PlayerStat[]): PlayerSta
 }
 
 export function seasonPerformances(data: Tournament): PlayerStat[] {
-  return data.matches.filter(match => match.status === 'completed' && match.published)
+  return data.matches.filter(match => match.status === 'completed')
     .flatMap(match => matchPerformances(match, data.stats));
 }
 
@@ -97,7 +97,7 @@ function sum(rows: PlayerStat[], key: 'runs' | 'wickets' | 'fours' | 'sixes' | '
 
 export function standings(teams: Team[], matches: Match[]) {
   return teams.map(team => {
-    const played = matches.filter(match => match.published && (match.stage === 'league' || match.stage === 'group') &&
+    const played = matches.filter(match => (match.stage === 'league' || match.stage === 'group') &&
       (match.status === 'completed' || match.status === 'abandoned') && [match.team_a, match.team_b].includes(team.id));
     const won = played.filter(match => match.status === 'completed' && match.winner === team.id).length;
     const lost = played.filter(match => match.status === 'completed' && match.winner && match.winner !== team.id).length;

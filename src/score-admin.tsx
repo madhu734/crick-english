@@ -377,10 +377,11 @@ function MatchSetup({ match, data, disabled, start }: { match: Match; data: Tour
   const batting = lineups.find(side => side.team === battingTeam)!;
   const fielding = lineups.find(side => side.team !== battingTeam)!;
   const playerName = (id: string) => data.players.find(player => player.id === id)?.name ?? 'Player';
-  const valid = lineups[0].players.length === lineups[1].players.length && lineups[0].players.length >= 2 && lineups[0].players.length <= MAX_PLAYERS;
+  const valid = !!match.team_a && !!match.team_b && match.team_a !== match.team_b &&
+    lineups[0].players.length === lineups[1].players.length && lineups[0].players.length >= 2 && lineups[0].players.length <= MAX_PLAYERS;
   return <div className="two-col scorer-grid">
     <section className="panel padded"><h2>Playing squads</h2>
-      <p className="updated">Any selected player can bat or bowl.</p>
+      <p className="updated">{!match.team_a || !match.team_b ? 'Set both teams in Manage before starting scoring.' : 'Any selected player can bat or bowl.'}</p>
       <div className="two-col">{lineups.map((side, index) => <fieldset className="lineup-checks" key={side.team}>
         <legend>{data.teams.find(team => team.id === side.team)?.name} ({side.players.length})</legend>
         {data.players.filter(player => player.team === side.team).map(({ id: player }) => <label key={player}>

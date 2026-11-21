@@ -72,10 +72,10 @@ export function Badge({ status }: { status: Match['status'] }) {
 export function MatchCard({ match, teams }: { match: Match; teams: Team[] }) {
   return <SiteLink to={'/matches/' + match.id} className="match-card">
     <div className="match-meta"><Badge status={match.status} /><span>{stageLabel[match.stage]}</span></div>
-    {[match.team_a, match.team_b].map(id => {
+    {[match.team_a, match.team_b].map((id, index) => {
       const team = teams.find(item => item.id === id);
       const score = match.scorecard?.innings.find(item => item.team === id);
-      return <div className="match-team" key={id}><Crest team={team} /><strong>{team?.name ?? 'TBD'}</strong>
+      return <div className="match-team" key={index}><Crest team={team} /><strong>{team?.name ?? 'TBD'}</strong>
         {score && <span className="team-score"><strong>{score.runs}/{score.wickets}</strong> <small>({oversText(score.balls)})</small></span>}
       </div>;
     })}

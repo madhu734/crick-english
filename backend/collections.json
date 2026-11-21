@@ -393,8 +393,8 @@
   },
   {
     "id": "ce0000000000006",
-    "listRule": "(published = true) || (@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\")",
-    "viewRule": "(published = true) || (@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\")",
+    "listRule": "",
+    "viewRule": "",
     "createRule": "(@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\") && @request.body.status = \"scheduled\" && @request.body.scoring:isset = false && @request.body.score_token:isset = false && @request.body.score_parent:isset = false && @request.body.scorecard:isset = false && @request.body.winner:isset = false",
     "updateRule": "(@request.auth.collectionId = \"ce0000000000001\" && @request.auth.role = \"admin\") && (((@request.body.scoring:isset = false && @request.body.score_token:isset = false && @request.body.score_parent:isset = false && @request.body.scorecard:isset = false && @request.body.status:isset = false && @request.body.winner:isset = false) && (score_token = \"\" || (@request.body.team_a:isset = false && @request.body.team_b:isset = false && @request.body.overs:isset = false && @request.body.season:isset = false && @request.body.stage:isset = false))) || (@request.body.score_token:isset = true && @request.body.score_token != \"\" && @request.body.score_token != score_token && @request.body.score_parent:isset = true && @request.body.score_parent = score_token && @request.body.scoring:isset = true && @request.body.scorecard:isset = true && @request.body.status:isset = true && @request.body.team_a:isset = false && @request.body.team_b:isset = false && @request.body.overs:isset = false && @request.body.season:isset = false && @request.body.stage:isset = false))",
     "deleteRule": null,
@@ -429,7 +429,7 @@
         "type": "relation",
         "collectionId": "ce0000000000003",
         "maxSelect": 1,
-        "required": true,
+        "required": false,
         "cascadeDelete": false
       },
       {
@@ -437,7 +437,7 @@
         "type": "relation",
         "collectionId": "ce0000000000003",
         "maxSelect": 1,
-        "required": true,
+        "required": false,
         "cascadeDelete": false
       },
       {
