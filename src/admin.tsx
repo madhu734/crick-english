@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { ClipboardList, Download, LogOut, Pencil, Plus, ShieldCheck } from 'lucide-react';
+import { ClipboardList, Download, Eye, EyeOff, LogOut, Pencil, Plus, ShieldCheck } from 'lucide-react';
 import { dateText, emptyTournament, matchPerformances, playerRoles, readTournament, staffDb, stageLabel, timeText, type Match, type Player, type Team } from './data';
 import { Avatar, Crest, Empty, PageTitle } from './ui';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -25,6 +25,7 @@ function ScorerAppDownload() {
 }
 
 export function Admin() {
+  const [showPassword, setShowPassword] = useState(false);
   const [search] = useSearchParams();
   const scoringId = search.get('score');
   const [signedIn, setSignedIn] = useState(validSession);
@@ -65,7 +66,14 @@ export function Admin() {
   }
 
   if (!signedIn) return <div className="shell page narrow"><PageTitle title="Committee login" /><form className="panel padded login" onSubmit={login}>
-    <label>Password<input type="password" name="password" autoComplete="current-password" required /></label>
+    <label htmlFor="admin-password">Password</label>
+    <div className="password-field">
+      <input id="admin-password" type={showPassword ? 'text' : 'password'} name="password" autoComplete="current-password" required />
+      <button type="button" className="password-visibility" aria-label={showPassword ? 'Hide password' : 'Show password'}
+        aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>
+        {showPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
+      </button>
+    </div>
     {error && <p className="error" role="alert">{error}</p>}
     <button className="button primary" disabled={saving}><ShieldCheck size={17} /> {saving ? 'Signing in…' : 'Sign in'}</button>
   </form><ScorerAppDownload /></div>;

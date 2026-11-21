@@ -197,6 +197,10 @@ th { font-size:.75rem; color:var(--muted); }
 .login,.editor { display:grid; gap:.95rem; align-content:start; }
 .login label,.editor label { display:grid; gap:.25rem; font-size:.85rem; font-weight:650; }
 .login input,.editor input { width:100%; min-width:0; background:#fff; color:var(--ink); border:1px solid #bfcbde; border-radius:7px; padding:.6rem; }
+.password-field { position:relative; margin-top:-.7rem; }
+.login .password-field input { padding-right:3rem; }
+.password-visibility { position:absolute; top:0; right:0; width:44px; height:100%; display:grid; place-items:center; border:0; background:transparent; color:#52627a; cursor:pointer; }
+.password-visibility:focus-visible { outline:2px solid #6862bd; outline-offset:-3px; border-radius:7px; }
 .editor input[type='color'] { padding:.12rem; width:4rem; height:2.35rem; }
 .editor .check { display:flex; align-items:center; gap:.55rem; }.editor .check input { width:1.12rem; height:1.12rem; }
 .form-actions { display:flex; align-items:center; gap:.55rem; }
