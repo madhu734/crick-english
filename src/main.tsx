@@ -7,7 +7,7 @@ import '@fontsource/barlow-condensed/600.css';
 import '@fontsource/barlow-condensed/700.css';
 import { Admin } from './admin';
 import { MatchAnalysis } from './match-analysis';
-import { GraphicCard, renderPlayerCard, renderTeamCard } from './graphic-cards';
+import { GraphicCard, renderPlayerCard, renderResultCard, renderTeamCard } from './graphic-cards';
 import { signedRuns } from './scoring';
 import { dateText, emptyTournament, fileUrl, matchPerformances, oversText, playerTotals, publicDb, readMatches, readTournament, runsPerOver, seasonPerformances, stageLabel, standings, strikeRate, timeText, type Tournament, type Innings } from './data';
 import type { Performance } from './scoring';
@@ -148,6 +148,9 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
       {match.scorecard?.result && <p className="score-result">{match.scorecard.result}</p>}
     </div>
     <div className="detail-tabs tabs"><button aria-pressed={!squad} onClick={() => changeTab(false)}>Scorecard</button><button aria-pressed={squad} onClick={() => changeTab(true)}>Squads</button>{onRefresh && match.status === 'live' && <button type="button" onClick={onRefresh}>Refresh score</button>}</div>
+    {!squad && match.scorecard && (match.status === 'completed' || match.status === 'abandoned') &&
+      <GraphicCard key={match.id + ':' + match.updated} kind="Result" name={teams.map(team => team?.name ?? 'TBD').join(' vs ')}
+        render={() => renderResultCard({ match, season: data.season?.name ?? '', teams, players: data.players, stats, awarded: awarded || undefined })} />}
     {!squad && awarded && <section className="panel match-award">
       <Avatar player={awarded} />
       <div><h2><Trophy size={17} /> Player of the Match</h2>

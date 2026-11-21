@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Download, Image as ImageIcon } from 'lucide-react';
-import { fileUrl, type Player, type Team } from './data';
+import { fileUrl, oversText, stageLabel, type Match, type Player, type PlayerStat, type Team } from './data';
 import { teamLogoBackground, teamLogoFrame } from './team-logo';
 
 const ink = '#101928';
@@ -220,13 +220,147 @@ export async function renderTeamCard(team: Team, season: string, players: Player
   return image;
 }
 
-export function GraphicCard({ name, kind, render }: { name: string; kind: 'Player' | 'Team'; render: () => Promise<HTMLCanvasElement> }) {
+const resultDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Dhaka' });
+
+export async function renderResultCard({ match, season, teams, players, stats, awarded }: {
+  match: Match;
+  season: string;
+  teams: (Team | undefined)[];
+  players: Player[];
+  stats: PlayerStat[];
+  awarded?: Player;
+}) {
+  const playerNames = new Map(players.map(player => [player.id, player.name]));
+  const sides = [match.team_a, match.team_b].map((id, index) => {
+    const rows = stats.filter(row => row.team === id);
+    return {
+      id,
+      team: teams[index],
+      name: teams[index]?.name ?? 'TBD',
+      innings: match.scorecard?.innings.find(row => row.team === id),
+      superOver: match.scorecard?.superOver?.innings.find(row => row.team === id),
+      batters: rows.filter(row => row.batted)
+        .sort((a, b) => b.runs - a.runs || a.balls_faced - b.balls_faced).slice(0, 2),
+      bowlers: rows.filter(row => row.balls_bowled || row.wickets || row.runs_conceded)
+        .sort((a, b) => b.wickets - a.wickets || a.runs_conceded - b.runs_conceded || b.balls_bowled - a.balls_bowled).slice(0, 2),
+    };
+  });
+  const hasFigures = sides.some(side => side.batters.length || side.bowlers.length);
+  const hasSuperOver = sides.some(side => side.superOver);
+  const figuresTop = hasSuperOver ? 741 : 638;
+  const bodyEnd = hasFigures ? figuresTop + 354 : hasSuperOver ? 727 : 624;
+  const awardTop = hasFigures ? bodyEnd : bodyEnd + 24;
+  const awardHeight = hasFigures ? 1242 - awardTop : 144;
+  const height = Math.max(900, (awarded ? awardTop + awardHeight : bodyEnd) + 108);
+  const { image, ctx } = canvas(height, '#293b66');
+  const [crests, awardPhoto] = await Promise.all([
+    Promise.all(sides.map(({ team }) => portrait(team ? fileUrl(team, team.logo) : ''))),
+    awarded ? portrait(fileUrl(awarded, awarded.photo)) : Promise.resolve(null),
+  ]);
+
+  header(ctx, season);
+  words(ctx, 'MATCH RESULT', 52, 175, 574, 86, '#ffffff', true);
+  ctx.textAlign = 'right';
+  words(ctx, stageLabel[match.stage].toUpperCase(), 1026, 132, 394, 22, gold);
+  words(ctx, resultDate.format(new Date(match.starts_at)), 1026, 172, 394, 28, pale);
+  ctx.textAlign = 'left';
+
+  for (const [index, side] of sides.entries()) {
+    const x = 54 + index * 495;
+    box(ctx, x, 210, 477, 280, 24, ink);
+    box(ctx, x + 21, 230, 435, 5, 3, match.winner === side.id ? gold : '#ffffff48');
+    picture(ctx, crests[index], side.team?.short_name || initials(side.name), x + 25, 255, 112, 109, 13, true, side.team?.logo);
+    crests[index]?.close();
+    words(ctx, side.name.toUpperCase(), x + 153, 326, 298, 45, '#ffffff', true);
+    box(ctx, x + 25, 383, 427, 1, 0, '#ffffff45');
+    const { innings } = side;
+    if (innings) {
+      words(ctx, `${innings.runs}/${innings.wickets}`, x + 24, 460, 283, 86, '#ffffff', true);
+      ctx.textAlign = 'right';
+      words(ctx, oversText(innings.balls) + ' OVERS', x + 451, 452, 155, 24, pale);
+      ctx.textAlign = 'left';
+    } else {
+      words(ctx, 'SCORE UNAVAILABLE', x + 25, 445, 427, 30, pale);
+    }
+  }
+
+  const winner = sides.find(side => side.id === match.winner);
+  const result = match.scorecard?.result?.trim() ||
+    (match.status === 'abandoned' ? 'No result' : winner ? winner.name + ' won' : 'Match completed');
+  box(ctx, 54, 512, 972, 100, 18, gold);
+  ctx.textAlign = 'center';
+  words(ctx, result.toUpperCase(), 540, 583, 906, 60, ink, true);
+  ctx.textAlign = 'left';
+
+  if (hasSuperOver) {
+    box(ctx, 54, 632, 972, 77, 15, '#233252');
+    const scores = sides.filter(side => side.superOver).map(side => {
+      const innings = side.superOver!;
+      return `${side.team?.short_name || side.name} ${innings.runs}/${innings.wickets} (${oversText(innings.balls)} ov)`;
+    });
+    words(ctx, 'SUPER OVER', 78, 680, 170, 24, gold);
+    words(ctx, scores.join('    ·    '), 265, 681, 737, 34, '#ffffff', true);
+  }
+
+  if (hasFigures) {
+    for (const [index, side] of sides.entries()) {
+      const x = 54 + index * 495;
+      box(ctx, x, figuresTop, 477, 328, 18, paper);
+      const headings = [
+        { title: 'TOP BATTERS', columns: 'RUNS (BALLS)', rows: side.batters, offset: 0 },
+        { title: 'TOP BOWLERS', columns: 'W/R (OV)', rows: side.bowlers, offset: 154 },
+      ];
+      for (const { title, columns, rows, offset } of headings) {
+        const top = figuresTop + offset;
+        words(ctx, title, x + 25, top + 42, 426, 24, '#394a61');
+        ctx.textAlign = 'right';
+        if (rows.length) words(ctx, columns, x + 451, top + 41, 121, 15, '#394a61');
+        ctx.textAlign = 'left';
+        if (!rows.length) words(ctx, 'Figures unavailable', x + 25, top + 91, 426, 29, '#394a61', true);
+        rows.forEach((row, rank) => {
+          const y = top + 86 + 42 * rank;
+          const figures = offset === 0
+            ? `${row.runs}${row.not_out ? '*' : ''} (${row.balls_faced})`
+            : `${row.wickets}/${row.runs_conceded} (${oversText(row.balls_bowled)})`;
+          words(ctx, playerNames.get(row.player) ?? 'Player', x + 25, y, 292, 32, ink, true);
+          ctx.textAlign = 'right';
+          words(ctx, figures, x + 451, y, 121, 32, ink, true);
+          ctx.textAlign = 'left';
+        });
+      }
+      box(ctx, x + 25, figuresTop + 154, 427, 1, 0, '#10192835');
+    }
+  }
+
+  if (awarded) {
+    const figures = stats.find(row => row.player === awarded.id);
+    const summary: string[] = [];
+    if (figures?.batted) summary.push(`${figures.runs}${figures.not_out ? '*' : ''} runs off ${figures.balls_faced} balls`);
+    if (figures && (figures.balls_bowled || figures.wickets || figures.runs_conceded)) {
+      summary.push(`${figures.wickets}/${figures.runs_conceded} in ${oversText(figures.balls_bowled)} overs`);
+    }
+    const center = awardTop + awardHeight / 2;
+    const photoSize = Math.min(156, awardHeight - 28);
+    const textLeft = 97 + photoSize;
+    box(ctx, 54, awardTop, 972, awardHeight, 19, '#233252');
+    picture(ctx, awardPhoto, initials(awarded.name), 72, center - photoSize / 2, photoSize, photoSize, 13);
+    awardPhoto?.close();
+    words(ctx, 'PLAYER OF THE MATCH', textLeft, center - 25, 1001 - textLeft, 21, gold);
+    words(ctx, awarded.name, textLeft - 2, center + 26, 1003 - textLeft, 56, '#ffffff', true);
+    if (summary.length) words(ctx, summary.join(' · '), textLeft, center + 57, 1001 - textLeft, 26, pale, true);
+  }
+  footer(ctx, height);
+  return image;
+}
+
+export function GraphicCard({ name, kind, render }: { name: string; kind: 'Player' | 'Team' | 'Result'; render: () => Promise<HTMLCanvasElement> }) {
   const [preview, setPreview] = useState<{ url: string; width: number; height: number }>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview.url); }, [preview]);
 
-  const filename = `Crick-English-${name.replace(/[^\p{L}\p{N} ._-]+/gu, '-').trim()}.png`;
+  const filename = `Crick-English-${kind === 'Result' ? 'Result-' : ''}${name.replace(/[^\p{L}\p{N} ._-]+/gu, '-').trim()}.png`;
+  const downloadLabel = kind === 'Result' ? 'Download result card' : 'Download PNG';
 
   async function generate(download = false) {
     setBusy(true);
@@ -255,8 +389,8 @@ export function GraphicCard({ name, kind, render }: { name: string; kind: 'Playe
       <div className="graphic-actions">
         {!preview && <button type="button" className="quiet" disabled={busy} onClick={() => void generate()}><ImageIcon size={17} /> Preview card</button>}
         {preview
-          ? <a className="button primary small" href={preview.url} download={filename}><Download size={17} /> Download PNG</a>
-          : <button type="button" className="button primary small" disabled={busy} onClick={() => void generate(true)}><Download size={17} /> {busy ? 'Preparing…' : 'Download PNG'}</button>}
+          ? <a className="button primary small" href={preview.url} download={filename}><Download size={17} /> {downloadLabel}</a>
+          : <button type="button" className="button primary small" disabled={busy} onClick={() => void generate(true)}><Download size={17} /> {busy ? 'Preparing…' : downloadLabel}</button>}
       </div>
     </div>
     {error && <p role="alert">Could not create the card. Try again.</p>}
