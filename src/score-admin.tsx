@@ -73,7 +73,7 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
 }) {
   const [error, setError] = useState('');
   const [details, setDetails] = useState<'wide' | 'noBall' | 'byes' | 'wicketMenu' | 'wicket' | 'replaceBatter' | 'endEarly' | 'adjustment' | number | null>(null);
-  const [confirm, setConfirm] = useState<'noResult' | 'reopen' | 'previous' | null>(null);
+  const [confirm, setConfirm] = useState<'reopen' | 'previous' | null>(null);
   const [superBatting, setSuperBatting] = useState('');
   const names = Object.fromEntries(data.teams.map(team => [team.id, team.name]));
   const playerName = (player: string) => data.players.find(item => item.id === player)?.name ?? 'Player';
@@ -262,7 +262,6 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
                 {!active.done && active.bowler && <button className="quiet" disabled={saving} aria-expanded={details === 'byes'} onClick={() => toggleDetails('byes')}>Byes</button>}
                 <button className="quiet" disabled={saving || !currentLog.plays.length || details !== null} onClick={undo}><RotateCcw size={15} /> Undo last entry</button>
                 {(entries.length === 2 || log.superOver) && !currentLog.plays.length && <button className="quiet" disabled={saving || logFormOpen} onClick={() => setConfirm('previous')}>{log.superOver && entries.length === 1 ? 'Cancel Super Over' : 'Return to first innings'}</button>}
-                {!score.canFinalize && <button className="quiet" disabled={saving || logFormOpen} onClick={() => setConfirm('noResult')}>Mark no result</button>}
               </div>
             </section>
             <RecentDeliveries innings={active} />
@@ -311,11 +310,10 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
           </div>}
         {confirm && <div className="panel padded scoring-confirm" role="group" aria-label="Confirm score change">
           <p>{confirm === 'reopen' ? 'Reopen this result for scoring corrections? The points table will update when you finalize it again.' :
-            confirm === 'previous' ? (log.superOver && entries.length === 1 ? 'Cancel Super Over setup and return to the tied result?' : 'Return to the first innings? You can set up the chase again after making corrections.') :
-            'Close this match as no result?'}</p>
+            log.superOver && entries.length === 1 ? 'Cancel Super Over setup and return to the tied result?' : 'Return to the first innings? You can set up the chase again after making corrections.'}</p>
           <div className="scoring-actions"><button className="button primary" disabled={saving} onClick={() => {
             if (confirm === 'previous') void save(log.superOver && entries.length === 1 ? { ...log, superOver: undefined } : withEntries(log, entries.slice(0, 1)));
-            else void save({ ...log, outcome: confirm === 'reopen' ? undefined : 'noResult' });
+            else void save({ ...log, outcome: undefined });
           }}>Confirm</button><button className="quiet" disabled={saving} onClick={() => setConfirm(null)}>Cancel</button></div>
         </div>}
       </> : null}
