@@ -24,7 +24,7 @@ export type PlayerStat = RecordModel & {
 };
 export type History = RecordModel & {
   season_number: number; year: number; champion: string; runner_up: string; champion_logo: string; runner_up_logo: string; published: boolean;
-  champion_captain?: string; runner_up_captain?: string; team_photo?: string; edition?: string;
+  champion_captain?: string; runner_up_captain?: string; team_photo?: string; runner_up_photo?: string; edition?: string;
 };
 export type Tournament = {
   season: Season | undefined; teams: Team[]; players: Player[]; matches: Match[]; stats: PlayerStat[]; history: History[];
@@ -42,7 +42,7 @@ export async function readTournament(db: PocketBase, signal?: AbortSignal): Prom
   const query = { requestKey: null, signal };
   const [seasons, history] = await Promise.all([
     db.collection('ce_seasons').getFullList<Season>({ ...query, sort: '-number' }),
-    db.collection('ce_season_history').getFullList<History>({ ...query, sort: '-season_number' }),
+    db.collection('ce_season_history').getFullList<History>({ ...query, sort: 'season_number,edition' }),
   ]);
   const season = seasons.find(item => item.active) ?? seasons[0];
   if (!season) return { ...emptyTournament, history };

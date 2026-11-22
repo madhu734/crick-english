@@ -753,7 +753,23 @@
         "thumbs": [
           "960x0"
         ],
-        "help": "Optional team photo for this season. Displayed below the champion and runner-up."
+        "help": "Optional champion team photo."
+      },
+      {
+        "name": "runner_up_photo",
+        "type": "file",
+        "maxSelect": 1,
+        "maxSize": 10485760,
+        "mimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/avif"
+        ],
+        "thumbs": [
+          "960x0"
+        ],
+        "help": "Optional runner-up team photo."
       },
       {
         "name": "champion_logo",

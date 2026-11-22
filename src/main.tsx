@@ -357,10 +357,13 @@ function HistoryPage({ data }: { data: Tournament }) {
           <div><small>{label}</small><strong>{name}</strong>{captain?.trim() && <p className="history-captain">Captain: {captain.trim()}</p>}</div>
         </div>)}
       </div>
-      {season.team_photo?.trim() && <figure className="history-photo">
-        <img src={publicDb.files.getURL(season, season.team_photo, { thumb: '960x0' })} alt={`${title} team photo`} loading="lazy" decoding="async" />
-        <figcaption>{title} · Team photo</figcaption>
-      </figure>}
+      {[
+        { role: 'Champion', name: season.champion, photo: season.team_photo },
+        { role: 'Runner-up', name: season.runner_up, photo: season.runner_up_photo },
+      ].map(({ role, name, photo }) => photo?.trim() && <figure className="history-photo" key={role}>
+        <img src={publicDb.files.getURL(season, photo, { thumb: '960x0' })} alt={`${name} team photo, ${title} ${role.toLowerCase()}`} loading="lazy" decoding="async" />
+        <figcaption>{role} · {name}</figcaption>
+      </figure>)}
     </article>;
   })}</div>{!data.history.length && <Empty title="The archive is coming soon">Champion and runner-up records will appear as they are added.</Empty>}</div>;
 }
