@@ -20,7 +20,7 @@ appropriate player/team/history record, then tick `reviewed` on the request.
 minute and emails `www.madhu734@gmail.com`. Email contains the request text and
 a dashboard link; attachments stay in the protected collection.
 
-Production delivery uses the existing Gmail OAuth credential `Bumblebee` in the
+Production delivery uses the existing Gmail OAuth credential `madhu734` in the
 [Crick English support notifications workflow](https://n8n.tmadhu.me/workflow/k3OOYOTAWuRiiufE).
 PocketBase SMTP was enabled but Gmail rejected its credentials during setup.
 The existing SMTP settings were preserved for the other apps on this instance.
