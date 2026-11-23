@@ -6,6 +6,7 @@ import '@fontsource-variable/inter';
 import '@fontsource/barlow-condensed/600.css';
 import '@fontsource/barlow-condensed/700.css';
 import { Admin } from './admin';
+import { SupportForm } from './support';
 import { MatchAnalysis } from './match-analysis';
 import { GraphicCard, renderPlayerCard, renderResultCard, renderTeamCard } from './graphic-cards';
 import { signedRuns } from './scoring';
@@ -58,9 +59,10 @@ function App() {
   if (isAdmin) return <main className="admin-shell"><Admin /></main>;
 
   return <Layout>
-    {error && <div className="shell"><div role="alert" className="notice">{error}
+    {error && location.pathname !== '/support' && <div className="shell"><div role="alert" className="notice">{error}
       <button type="button" className="quiet" onClick={() => { setLoading(true); setError(''); setReload(n => n + 1); }}>Retry</button></div></div>}
-    {loading && location.pathname !== '/' ? <div className="shell page"><Empty title="Loading tournament…" /></div> : <Routes>
+    {loading && location.pathname !== '/' && location.pathname !== '/support' ? <div className="shell page"><Empty title="Loading tournament…" /></div> : <Routes>
+      <Route path="/support" element={<SupportForm />} />
       <Route path="/" element={<Home data={data} loading={loading} />} />
       <Route path="/matches/:id" element={<MatchPage data={data} onRefresh={() => setReload(n => n + 1)} />} />
       <Route path="/teams" element={<TeamsPage data={data} />} />

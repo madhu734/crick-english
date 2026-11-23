@@ -36,7 +36,7 @@ export function Layout({ children }: { children: ReactNode }) {
     </div></header>
     <main>{children}</main>
     <footer className="footer"><div className="shell"><span>Crick English</span>
-      <div className="footer-support"><strong>Need help?</strong><p>For questions, suggestions, or profile updates, email <a href="mailto:support@enggames.tech">support@enggames.tech</a>. To request an update, include your profile name, the information currently shown, and what should replace it. If you want to change your photo, attach the new one.</p></div>
+      <div className="footer-support"><strong>Need help?</strong><p>For questions, suggestions, or profile updates, email <a href="mailto:support@enggames.tech">support@enggames.tech</a> or <SiteLink to="/support">submit the form here</SiteLink>. For updates, include your profile name, the information currently shown, and what should replace it. You can also attach a new photo.</p></div>
     </div></footer>
   </>;
 }

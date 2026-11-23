@@ -41,7 +41,15 @@ Published records remain visible through the existing public read rules. Team re
 
 The identified fictional teams, players, fixtures and player statistics were removed before real data entry. `backend/testing-records.json` is the historical list of those test IDs. The active season, staff and current history records were preserved.
 
-## Checks
+## Support form
+
+The website footer links to `/support`, where visitors can send a correction,
+question or suggestion with optional photos. Submissions are private and stored
+in `ce_support_requests`. PocketBase emails the committee using its existing
+SMTP settings. See [the support setup and review guide](backend/support-requests.md)
+for the collection, notification queue and server hook deployment details.
+
+## Validation
 
 Run `node --test test/scoring.test.mjs` to verify scoring rules and `npm run build` to check the website.
 
