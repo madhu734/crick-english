@@ -45,8 +45,8 @@ The identified fictional teams, players, fixtures and player statistics were rem
 
 The website footer links to `/support`, where visitors can send a correction,
 question or suggestion with optional photos. Submissions are private and stored
-in `ce_support_requests`. PocketBase emails the committee using its existing
-SMTP settings. See [the support setup and review guide](backend/support-requests.md)
+in `ce_support_requests`. PocketBase queues email notifications for the committee,
+delivered through the existing Gmail connection in n8n. See [the support setup and review guide](backend/support-requests.md)
 for the collection, notification queue and server hook deployment details.
 
 ## Validation
