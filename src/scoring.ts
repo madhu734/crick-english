@@ -18,12 +18,13 @@ export type MatchLog = {
   version: 1; overs: number; lineups: [Lineup, Lineup]; innings: InningsLog[]; outcome?: 'final' | 'noResult';
   superOver?: InningsLog[];
 };
-export const MATCH_OVERS = 14;
+export const MATCH_OVERS = 24;
 export const MAX_PLAYERS = 11;
 export type Performance = {
   player: string; team: string; runs: number; balls_faced: number; fours: number; sixes: number;
   wickets: number; balls_bowled: number; runs_conceded: number; batted: boolean; not_out: boolean; retired?: boolean;
 };
+export type FallOfWicket = { wicket: number; runs: number; player: string; balls: number };
 type Extras = { wide: number; noBall: number; bye: number; legBye: number };
 type ScorePoint = { index: number; legalBalls: number; totalRuns: number; totalWickets: number };
 type DeliveryRecord = ScorePoint & {
@@ -34,6 +35,13 @@ export type InningsState = {
   wickets: number; balls: number; extras: Extras; allOut: boolean; done: boolean; endedEarly: boolean;
   deliveries: DeliveryRecord[]; adjustments: (ScorePoint & { runs: number })[]; adjustedRuns: number; availableBatters: string[];
 };
+
+export function fallOfWickets(innings: InningsState): FallOfWicket[] {
+  return innings.deliveries.flatMap(delivery => delivery.wicket ? [{
+    wicket: delivery.totalWickets, runs: delivery.totalRuns,
+    player: delivery.wicket.player, balls: delivery.legalBalls,
+  }] : []);
+}
 
 function requireRule(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -265,6 +273,7 @@ export function publishScore(log: MatchLog, names: Record<string, string>) {
     team: innings.team, runs: innings.runs, wickets: innings.wickets, balls: innings.balls, allOut: innings.allOut,
     quota, endedEarly: innings.endedEarly, adjustedRuns: innings.adjustedRuns,
     extras: Object.values(innings.extras).reduce((total, runs) => total + runs, 0), extrasBreakdown: innings.extras,
+    fallOfWickets: fallOfWickets(innings),
   });
   const active = !result.active.done && !log.outcome ? result.active : undefined;
   return {

@@ -51,6 +51,18 @@ for the collection, notification queue and server hook deployment details.
 
 ## Validation
 
+Regulation matches use 24 overs and up to 11 players per side. Existing scored
+logs keep their recorded quota; a Super Over stays at one over. Each saved
+scorecard includes `fallOfWickets` per innings: wicket number, team runs at the
+fall, dismissed player ID and elapsed legal balls. Later run adjustments do not
+rewrite an earlier wicket's score. Website and Android scorecards show these
+records separately for regulation innings and Super Overs.
+
+The printable ball-by-ball sheet is in `public/downloads/Crick-English-24-over-scoring-sheet.pdf`
+and linked in the admin portal. It has 24 overs per innings, 9 delivery boxes
+per over and a batter name/initial row per delivery. Print all 8 pages in A4
+landscape at 100%. Rebuild it with `python tools/create-score-sheet.py` (ReportLab).
+
 Run `node --test test/scoring.test.mjs` to verify scoring rules and `npm run build` to check the website.
 
 ## Production build

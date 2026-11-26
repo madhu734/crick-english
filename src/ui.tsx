@@ -3,6 +3,17 @@ import { Link, NavLink } from 'react-router-dom';
 import { CalendarDays, ChevronRight, CircleDot, Download, Trophy } from 'lucide-react';
 import { dateText, fileUrl, oversText, stageLabel, timeText, type Match, type Player, type Team } from './data';
 import { teamLogoBackground, teamLogoViewBox } from './team-logo';
+import type { FallOfWicket } from './scoring';
+
+export function WicketFalls({ entries, wickets, playerName }: { entries?: FallOfWicket[]; wickets: number; playerName: (id: string) => string }) {
+  return <section className="wicket-falls" aria-label="Fall of wickets">
+    <h3>Fall of wickets</h3>
+    {entries?.length ? <ol>{entries.map(entry => <li key={entry.wicket}>
+      <strong>{entry.runs}/{entry.wicket}</strong>
+      <span><SiteLink to={'/players/' + entry.player}>{playerName(entry.player)}</SiteLink><small>{oversText(entry.balls)} ov</small></span>
+    </li>)}</ol> : <p>{wickets ? 'Wicket details were not recorded for this innings.' : 'No wickets lost.'}</p>}
+  </section>;
+}
 
 export function SiteLink({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
   return <Link to={to} className={className}>{children}</Link>;

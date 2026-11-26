@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { publishScore, quickBall, scoreMatch } from '../src/scoring.ts';
+import { MATCH_OVERS, publishScore, quickBall, scoreMatch } from '../src/scoring.ts';
 
 const start = (plays = [], overs = 2) => ({
   version: 1, overs, lineups: [{team: 'a', players: ['a1','a2','a3']},{team: 'b', players: ['b1','b2','b3']}],
@@ -8,6 +8,38 @@ const start = (plays = [], overs = 2) => ({
 });
 const ball = (kind, runType, runs, wicket) => ({type:'ball',delivery:{kind,runType,runs,wicket}});
 const names = { a:'Team A', b:'Team B' };
+
+test('regulation format lasts 24 overs while historical 14-over logs still replay', () => {
+  assert.equal(MATCH_OVERS, 24);
+  const plays = [];
+  for (let over = 0; over < MATCH_OVERS; over++) {
+    if (over) plays.push({ type: 'bowler', player: over % 2 ? 'b2' : 'b1' });
+    plays.push(...Array.from({ length: 6 }, () => quickBall(0)));
+  }
+  assert.equal(scoreMatch(start(plays.slice(0, 97), MATCH_OVERS)).active.done, false);
+  assert.equal(scoreMatch(start(plays, MATCH_OVERS)).active.balls, 144);
+  assert.equal(scoreMatch(start(plays, MATCH_OVERS)).active.done, true);
+  assert.throws(() => scoreMatch(start([...plays, quickBall(0)], MATCH_OVERS)), /already finished/);
+  assert.equal(scoreMatch(start(plays.slice(0, 97), 14)).active.done, true);
+});
+
+test('fall of wickets uses dismissed player, score at the wicket and elapsed legal balls', () => {
+  const plays = [quickBall(4), {type:'adjustRuns',runs:5},
+    ball('wide','bat',0,{player:'a1',how:'Stumped',next:'a3'}),
+    ball('noBall','bat',2,{player:'a2',how:'Run out'}), {type:'adjustRuns',runs:-3}];
+  const summary = publishScore(start(plays, MATCH_OVERS), names).scorecard.innings[0];
+  assert.equal(summary.runs, 10);
+  assert.deepEqual(summary.fallOfWickets, [
+    {wicket:1,runs:10,player:'a1',balls:1}, {wicket:2,runs:13,player:'a2',balls:1},
+  ]);
+  assert.deepEqual(publishScore(start([quickBall(6), ...plays.slice(1)], MATCH_OVERS), names)
+    .scorecard.innings[0].fallOfWickets.map(row => row.runs), [12,15]);
+  const sixth = publishScore(start([...Array.from({length:5},()=>quickBall(0)),
+    ball('legal','bat',0,{player:'a1',how:'Bowled',next:'a3'})], MATCH_OVERS), names);
+  assert.deepEqual(sixth.scorecard.innings[0].fallOfWickets, [{wicket:1,runs:0,player:'a1',balls:6}]);
+  assert.deepEqual(publishScore(start([{type:'replaceBatter',outgoing:'a1',incoming:'a3'}], MATCH_OVERS), names)
+    .scorecard.innings[0].fallOfWickets, []);
+});
 
 test('a tied match can finalize directly or use separate Super Over scoring', () => {
   const opening = { striker: 'b1', partner: 'b2', bowler: 'a1' };
@@ -44,6 +76,17 @@ test('wides, no-balls and byes are attributed to the correct totals and ends', (
   const bowler = players.find(p=>p.player==='b1');
   assert.deepEqual([batter.runs,batter.balls_faced,batter.fours,partner.balls_faced],[4,2,1,1]);
   assert.deepEqual([bowler.runs_conceded,bowler.balls_bowled],[7,2]);
+});
+
+test('Super Over wickets remain separate from regulation wickets', () => {
+  const log = start([quickBall(4), {type:'closeInnings'}], MATCH_OVERS);
+  log.innings.push({team:'b',opening:{striker:'b1',partner:'b2',bowler:'a1'},plays:[quickBall(4),{type:'closeInnings'}]});
+  log.superOver = [{...log.innings[0], plays:[ball('legal','bat',0,{player:'a1',how:'Bowled',next:'a3'}),quickBall(4),{type:'closeInnings'}]},
+    {...log.innings[1],plays:[quickBall(6)]}];
+  const card = publishScore({...log,outcome:'final'}, names).scorecard;
+  assert.deepEqual(card.innings.map(row => row.fallOfWickets), [[],[]]);
+  assert.deepEqual(card.superOver.innings[0].fallOfWickets, [{wicket:1,runs:0,player:'a1',balls:1}]);
+  assert.deepEqual(card.superOver.innings.map(row => row.quota), [1,1]);
 });
 
 test('the sixth legal ball and odd runs can swap ends twice; an over requires a different bowler', () => {

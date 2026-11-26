@@ -1,5 +1,5 @@
 import PocketBase, { BaseAuthStore, LocalAuthStore, type RecordModel } from 'pocketbase';
-import type { Lineup, Performance } from './scoring';
+import type { FallOfWicket, Lineup, Performance } from './scoring';
 
 export const databaseUrl = import.meta.env.VITE_POCKETBASE_URL ?? 'https://pbdb2.duckdns.org';
 export const publicDb = new PocketBase(databaseUrl, new BaseAuthStore());
@@ -11,7 +11,7 @@ export const playerRoles = ['Bowler', 'Batsman', 'All-rounder', 'Wicketkeeper', 
 export type Player = RecordModel & { name: string; batch: string; role: typeof playerRoles[number]; photo: string; team: string };
 export type Stage = 'league' | 'group' | 'semifinal' | 'final' | 'friendly';
 export type Status = 'scheduled' | 'live' | 'completed' | 'abandoned';
-export type Innings = { team: string; runs: number; wickets: number; balls: number; allOut?: boolean; quota?: number; extras?: number; endedEarly?: boolean; adjustedRuns?: number };
+export type Innings = { team: string; runs: number; wickets: number; balls: number; allOut?: boolean; quota?: number; extras?: number; endedEarly?: boolean; adjustedRuns?: number; fallOfWickets?: FallOfWicket[] };
 export type Scorecard = { innings: Innings[]; result?: string; recent?: string[]; currentBatters?: string[]; currentBowler?: string; playingSides?: Lineup[]; playerStats?: Performance[]; superOver?: { innings: Innings[]; playerStats: Performance[] } };
 export type Match = RecordModel & {
   season: string; team_a: string; team_b: string; starts_at: string; stage: Stage;

@@ -20,7 +20,8 @@ const option = (value: string, label: string): Option => ({ value, label });
 function ScorerAppDownload() {
   return <aside className="panel scorer-download">
     <div><strong>Scorer app for Android</strong><p>Download the app to score matches on your phone.</p></div>
-    <a className="button primary" href="https://github.com/madhu734/crick-english/releases/latest/download/Crick-English-Scorer.apk"><Download size={17} /> Download APK</a>
+    <div className="scorer-download-actions"><a className="button primary" href="https://github.com/madhu734/crick-english/releases/latest/download/Crick-English-Scorer.apk"><Download size={17} /> Download APK</a>
+    <a className="button quiet" href="/downloads/Crick-English-24-over-scoring-sheet.pdf" download><Download size={17} /> Scoring sheet (PDF)</a></div>
   </aside>;
 }
 

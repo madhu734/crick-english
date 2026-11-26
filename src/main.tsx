@@ -12,7 +12,7 @@ import { GraphicCard, renderPlayerCard, renderResultCard, renderTeamCard } from 
 import { signedRuns } from './scoring';
 import { dateText, emptyTournament, fileUrl, matchPerformances, oversText, playerTotals, publicDb, readMatches, readTournament, runsPerOver, seasonPerformances, stageLabel, standings, strikeRate, timeText, type Tournament, type Innings } from './data';
 import type { Performance } from './scoring';
-import { Avatar, BackLink, Badge, Crest, Empty, Layout, MatchCard, PageTitle, SiteLink } from './ui';
+import { Avatar, BackLink, Badge, Crest, Empty, Layout, MatchCard, PageTitle, SiteLink, WicketFalls } from './ui';
 import './style.css';
 
 function App() {
@@ -173,6 +173,7 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
             <h3>Batting</h3><div className="table-wrap"><table className="match-batting-table"><thead><tr><th scope="col">Batter</th><th scope="col">R</th><th scope="col">B</th><th scope="col">4s</th><th scope="col">6s</th><th scope="col"><abbr title="Strike rate">SR</abbr></th></tr></thead><tbody>{rows.filter(row => row.batted).map(row => <tr key={row.id}><td><SiteLink className="scorecard-player" to={'/players/' + row.player}>{data.players.find(player => player.id === row.player) && <Avatar player={data.players.find(player => player.id === row.player)!} />}{playerName(row.player)}</SiteLink>{row.retired && <small>Retired</small>}</td><td>{row.runs}{row.not_out ? '*' : ''}</td><td>{row.balls_faced}</td><td>{row.fours}</td><td>{row.sixes}</td><td>{strikeRate(row.runs, row.balls_faced)}</td></tr>)}</tbody></table></div>
             {innings?.extras !== undefined && <p className="updated">Extras: {innings.extras}
               {!!innings.adjustedRuns && <> · Run adjustment: {signedRuns(innings.adjustedRuns)}</>}</p>}
+            {innings && <WicketFalls entries={innings.fallOfWickets} wickets={innings.wickets} playerName={playerName} />}
             <h3>Bowling</h3><div className="table-wrap"><table><thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th></tr></thead><tbody>{rows.filter(row => row.balls_bowled || row.wickets || row.runs_conceded).map(row => <tr key={row.id}><td><SiteLink to={'/players/' + row.player}>{playerName(row.player)}</SiteLink></td><td>{oversText(row.balls_bowled)}</td><td>{row.runs_conceded}</td><td>{row.wickets}</td></tr>)}</tbody></table></div>
           </section>;
         })}</div> : <Empty title="Individual scorecard pending" />}
@@ -199,6 +200,7 @@ function SuperOverInnings({ innings, figures, teamName, playerName }: {
         <td>{row.runs}{row.not_out ? '*' : ''}</td><td>{row.balls_faced}</td><td>{row.fours}</td><td>{row.sixes}</td><td>{strikeRate(row.runs, row.balls_faced)}</td></tr>)}</tbody>
     </table></div>
     <p className="updated">Extras {innings.extras ?? 0}{!!innings.adjustedRuns && <> · Run adjustment {signedRuns(innings.adjustedRuns)}</>}</p>
+    <WicketFalls entries={innings.fallOfWickets} wickets={innings.wickets} playerName={playerName} />
     <div className="table-wrap"><table><thead><tr><th>Bowler</th><th>O</th><th>R</th><th>W</th></tr></thead>
       <tbody>{bowlers.map(row => <tr key={row.player}><td><SiteLink to={'/players/' + row.player}>{playerName(row.player)}</SiteLink></td>
         <td>{oversText(row.balls_bowled)}</td><td>{row.runs_conceded}</td><td>{row.wickets}</td></tr>)}</tbody>
