@@ -265,7 +265,7 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
               </div>
             </section>
             <RecentDeliveries innings={active} />
-            <div className="panel padded"><WicketFalls entries={fallOfWickets(active)} wickets={active.wickets} playerName={playerName} /></div>
+            <div className="panel padded"><WicketFalls entries={fallOfWickets(active)} wickets={active.wickets} playerName={playerName} playerLinks={false} /></div>
             <section className="panel padded scorer-log"><h2>Delivery log</h2>
               {logEntries.length ? <ol className="delivery-log">{logEntries.map(({ play, index }) => {
                 if (play.type === 'replaceBatter' || play.type === 'adjustRuns' || play.type === 'closeInnings') return <li key={index}>

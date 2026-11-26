@@ -5,12 +5,12 @@ import { dateText, fileUrl, oversText, stageLabel, timeText, type Match, type Pl
 import { teamLogoBackground, teamLogoViewBox } from './team-logo';
 import type { FallOfWicket } from './scoring';
 
-export function WicketFalls({ entries, wickets, playerName }: { entries?: FallOfWicket[]; wickets: number; playerName: (id: string) => string }) {
+export function WicketFalls({ entries, wickets, playerName, playerLinks = true }: { entries?: FallOfWicket[]; wickets: number; playerName: (id: string) => string; playerLinks?: boolean }) {
   return <section className="wicket-falls" aria-label="Fall of wickets">
     <h3>Fall of wickets</h3>
     {entries?.length ? <ol>{entries.map(entry => <li key={entry.wicket}>
       <strong>{entry.runs}/{entry.wicket}</strong>
-      <span><SiteLink to={'/players/' + entry.player}>{playerName(entry.player)}</SiteLink><small>{oversText(entry.balls)} ov</small></span>
+      <span>{playerLinks ? <SiteLink to={'/players/' + entry.player}>{playerName(entry.player)}</SiteLink> : <span>{playerName(entry.player)}</span>}<small>{oversText(entry.balls)} ov</small></span>
     </li>)}</ol> : <p>{wickets ? 'Wicket details were not recorded for this innings.' : 'No wickets lost.'}</p>}
   </section>;
 }
