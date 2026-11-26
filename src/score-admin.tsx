@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ChevronLeft, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { oversText, staffDb, type Match, type Tournament } from './data';
-import { deliveryLabel, fallOfWickets, signedRuns, dismissals, publishScore, quickBall, scoreMatch, MATCH_OVERS, MAX_PLAYERS, type Delivery, type Dismissal, type InningsLog, type InningsState, type Lineup, type MatchLog, type Opening, type Play } from './scoring';
-import { Avatar, Crest, Empty, WicketFalls } from './ui';
+import { deliveryLabel, signedRuns, dismissals, publishScore, quickBall, scoreMatch, MATCH_OVERS, MAX_PLAYERS, type Delivery, type Dismissal, type InningsLog, type InningsState, type Lineup, type MatchLog, type Opening, type Play } from './scoring';
+import { Avatar, Crest, Empty } from './ui';
 import { CompactSelect } from './compact-select';
 
 export type MatchWithLog = Match & { scoring: MatchLog | null; score_token: string };
@@ -265,7 +265,6 @@ export function ScoreEditor({ match, data, saving = false, loading = false, load
               </div>
             </section>
             <RecentDeliveries innings={active} />
-            <div className="panel padded"><WicketFalls entries={fallOfWickets(active)} wickets={active.wickets} playerName={playerName} playerLinks={false} /></div>
             <section className="panel padded scorer-log"><h2>Delivery log</h2>
               {logEntries.length ? <ol className="delivery-log">{logEntries.map(({ play, index }) => {
                 if (play.type === 'replaceBatter' || play.type === 'adjustRuns' || play.type === 'closeInnings') return <li key={index}>
