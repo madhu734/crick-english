@@ -336,7 +336,8 @@ export async function renderResultCard({ match, season, teams, players, stats, a
   if (awarded) {
     const figures = stats.find(row => row.player === awarded.id);
     const summary: string[] = [];
-    if (figures?.batted) summary.push(`${figures.runs}${figures.not_out ? '*' : ''} runs off ${figures.balls_faced} balls`);
+    if (figures?.batted) summary.push(`${figures.runs}${figures.not_out ? '*' : ''} runs` +
+      (figures.unrecorded?.includes('balls_faced') ? '' : ` off ${figures.balls_faced} balls`));
     if (figures && (figures.balls_bowled || figures.wickets || figures.runs_conceded)) {
       summary.push(`${figures.wickets}/${figures.runs_conceded} in ${oversText(figures.balls_bowled)} overs`);
     }
