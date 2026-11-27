@@ -22,7 +22,7 @@ export const MATCH_OVERS = 24;
 export const MAX_PLAYERS = 11;
 export type Performance = {
   player: string; team: string; runs: number; balls_faced: number; fours: number; sixes: number;
-  wickets: number; balls_bowled: number; runs_conceded: number; batted: boolean; not_out: boolean; retired?: boolean;
+  wickets: number; balls_bowled: number; runs_conceded: number; batted: boolean; not_out: boolean; retired?: boolean; unrecorded?: string[];
 };
 export type FallOfWicket = { wicket: number; runs: number; player: string; balls: number };
 type Extras = { wide: number; noBall: number; bye: number; legBye: number };

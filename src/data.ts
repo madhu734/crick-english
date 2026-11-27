@@ -1,5 +1,6 @@
 import PocketBase, { BaseAuthStore, LocalAuthStore, type RecordModel } from 'pocketbase';
 import type { FallOfWicket, Lineup, Performance } from './scoring';
+import { rateFigures } from './recorded-stats';
 
 export const databaseUrl = import.meta.env.VITE_POCKETBASE_URL ?? 'https://pbdb2.duckdns.org';
 export const publicDb = new PocketBase(databaseUrl, new BaseAuthStore());
@@ -12,7 +13,7 @@ export type Player = RecordModel & { name: string; batch: string; role: typeof p
 export type Stage = 'league' | 'group' | 'semifinal' | 'final' | 'friendly';
 export type Status = 'scheduled' | 'live' | 'completed' | 'abandoned';
 export type Innings = { team: string; runs: number; wickets: number; balls: number; allOut?: boolean; quota?: number; extras?: number; endedEarly?: boolean; adjustedRuns?: number; fallOfWickets?: FallOfWicket[] };
-export type Scorecard = { innings: Innings[]; result?: string; recent?: string[]; currentBatters?: string[]; currentBowler?: string; playingSides?: Lineup[]; playerStats?: Performance[]; superOver?: { innings: Innings[]; playerStats: Performance[] } };
+export type Scorecard = { innings: Innings[]; result?: string; entryMode?: 'summary'; summaryNote?: string; recent?: string[]; currentBatters?: string[]; currentBowler?: string; playingSides?: Lineup[]; playerStats?: Performance[]; superOver?: { innings: Innings[]; playerStats: Performance[] } };
 export type Match = RecordModel & {
   season: string; team_a: string; team_b: string; starts_at: string; stage: Stage;
   overs: number; status: Status; published: boolean; winner: string; scorecard: Scorecard | null; updated: string;
@@ -20,7 +21,7 @@ export type Match = RecordModel & {
 };
 export type PlayerStat = RecordModel & {
   match: string; team: string; player: string; runs: number; balls_faced: number; fours: number; sixes: number;
-  wickets: number; balls_bowled: number; runs_conceded: number; batted: boolean; not_out: boolean; retired?: boolean;
+  wickets: number; balls_bowled: number; runs_conceded: number; batted: boolean; not_out: boolean; retired?: boolean; unrecorded?: string[];
 };
 export type History = RecordModel & {
   season_number: number; year: number; champion: string; runner_up: string; champion_logo: string; runner_up_logo: string; published: boolean;
@@ -83,7 +84,9 @@ export function seasonPerformances(data: Tournament): PlayerStat[] {
 }
 
 export function playerTotals(rows: PlayerStat[]) {
+  const rate = rateFigures(rows);
   return {
+    rateRuns: rate.runs, rateBalls: rate.balls,
     played: rows.length, runs: sum(rows, 'runs'), wickets: sum(rows, 'wickets'), fours: sum(rows, 'fours'), sixes: sum(rows, 'sixes'),
     ballsFaced: sum(rows, 'balls_faced'), ballsBowled: sum(rows, 'balls_bowled'), conceded: sum(rows, 'runs_conceded'),
     highest: rows.filter(row => row.batted).sort((a, b) => b.runs - a.runs || Number(b.not_out) - Number(a.not_out))[0],

@@ -13,6 +13,7 @@ import { signedRuns } from './scoring';
 import { dateText, emptyTournament, fileUrl, matchPerformances, oversText, playerTotals, publicDb, readMatches, readTournament, runsPerOver, seasonPerformances, stageLabel, standings, strikeRate, timeText, type Tournament, type Innings } from './data';
 import type { Performance } from './scoring';
 import { Avatar, BackLink, Badge, Crest, Empty, Layout, MatchCard, PageTitle, SiteLink, WicketFalls } from './ui';
+import { rowStrikeRate, statValue } from './recorded-stats';
 import './style.css';
 
 function App() {
@@ -162,6 +163,7 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
     </section>}
     {squad ? <div className="two-col">{teams.map((team, index) => <section className="panel padded" key={team?.id ?? index}><h2>{team?.name ?? 'TBD'}</h2><PlayerList data={data} teamId={team?.id ?? ''} playersInMatch={match.scorecard?.playingSides?.find(side => side.team === team?.id)?.players} /></section>)}</div> :
       !match.scorecard ? <Empty title="Scorecard pending">Scores will appear once the match is scored.</Empty> : <>
+        {match.scorecard.summaryNote && <p className="panel padded updated" role="note">{match.scorecard.summaryNote}</p>}
         {!!match.scorecard.recent?.length && <section className="panel padded recent"><h2>{match.scorecard.superOver ? 'Super Over recent balls' : 'Recent balls'}</h2><div>{match.scorecard.recent.slice(-20).map((ball, i) => <span className={'ball ball-' + ball} key={i}>{ball}</span>)}</div>
           {!!match.scorecard.currentBatters?.length && <p>Batting: {match.scorecard.currentBatters.map(key => playerName(key)).join(' · ')}</p>}
           {match.scorecard.currentBowler && <p>Bowling: {playerName(match.scorecard.currentBowler)}</p>}</section>}
@@ -170,7 +172,7 @@ function MatchPage({ data, onRefresh }: { data: Tournament; onRefresh?: () => vo
           const rows = stats.filter(row => row.team === team?.id);
           const innings = match.scorecard?.innings.find(row => row.team === team?.id);
           return <section className="panel padded" key={team?.id ?? index}><h2>{team?.name ?? 'TBD'}</h2>
-            <h3>Batting</h3><div className="table-wrap"><table className="match-batting-table"><thead><tr><th scope="col">Batter</th><th scope="col">R</th><th scope="col">B</th><th scope="col">4s</th><th scope="col">6s</th><th scope="col"><abbr title="Strike rate">SR</abbr></th></tr></thead><tbody>{rows.filter(row => row.batted).map(row => <tr key={row.id}><td><SiteLink className="scorecard-player" to={'/players/' + row.player}>{data.players.find(player => player.id === row.player) && <Avatar player={data.players.find(player => player.id === row.player)!} />}{playerName(row.player)}</SiteLink>{row.retired && <small>Retired</small>}</td><td>{row.runs}{row.not_out ? '*' : ''}</td><td>{row.balls_faced}</td><td>{row.fours}</td><td>{row.sixes}</td><td>{strikeRate(row.runs, row.balls_faced)}</td></tr>)}</tbody></table></div>
+            <h3>Batting</h3><div className="table-wrap"><table className="match-batting-table"><thead><tr><th scope="col">Batter</th><th scope="col">R</th><th scope="col">B</th><th scope="col">4s</th><th scope="col">6s</th><th scope="col"><abbr title="Strike rate">SR</abbr></th></tr></thead><tbody>{rows.filter(row => row.batted).map(row => <tr key={row.id}><td><SiteLink className="scorecard-player" to={'/players/' + row.player}>{data.players.find(player => player.id === row.player) && <Avatar player={data.players.find(player => player.id === row.player)!} />}{playerName(row.player)}</SiteLink>{row.retired && <small>Retired</small>}</td><td>{row.runs}{row.not_out ? '*' : ''}</td><td>{statValue(row, 'balls_faced')}</td><td>{statValue(row, 'fours')}</td><td>{statValue(row, 'sixes')}</td><td>{rowStrikeRate(row)}</td></tr>)}</tbody></table></div>
             {innings?.extras !== undefined && <p className="updated">Extras: {innings.extras}
               {!!innings.adjustedRuns && <> · Run adjustment: {signedRuns(innings.adjustedRuns)}</>}</p>}
             {innings && <WicketFalls entries={innings.fallOfWickets} wickets={innings.wickets} playerName={playerName} />}
@@ -197,7 +199,7 @@ function SuperOverInnings({ innings, figures, teamName, playerName }: {
     <h3>{teamName} · {innings.runs}/{innings.wickets} ({oversText(innings.balls)} ov)</h3>
     <div className="table-wrap"><table><thead><tr><th>Batter</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead>
       <tbody>{batters.map(row => <tr key={row.player}><td><SiteLink to={'/players/' + row.player}>{playerName(row.player)}</SiteLink>{row.retired && <small>Retired</small>}</td>
-        <td>{row.runs}{row.not_out ? '*' : ''}</td><td>{row.balls_faced}</td><td>{row.fours}</td><td>{row.sixes}</td><td>{strikeRate(row.runs, row.balls_faced)}</td></tr>)}</tbody>
+        <td>{row.runs}{row.not_out ? '*' : ''}</td><td>{statValue(row, 'balls_faced')}</td><td>{statValue(row, 'fours')}</td><td>{statValue(row, 'sixes')}</td><td>{rowStrikeRate(row)}</td></tr>)}</tbody>
     </table></div>
     <p className="updated">Extras {innings.extras ?? 0}{!!innings.adjustedRuns && <> · Run adjustment {signedRuns(innings.adjustedRuns)}</>}</p>
     <WicketFalls entries={innings.fallOfWickets} wickets={innings.wickets} playerName={playerName} />
@@ -267,7 +269,7 @@ function PlayerPage({ data }: { data: Tournament }) {
   const batting = rows.filter(row => row.batted);
   const bowling = rows.filter(row => row.balls_bowled || row.wickets || row.runs_conceded);
   const battingFigures: [string, string | number][] = [['Runs', total.runs], ['Highest', total.highest ? total.highest.runs + (total.highest.not_out ? '*' : '') : '—'],
-    ['Fours / Sixes', total.fours + ' / ' + total.sixes], ['Strike rate', strikeRate(total.runs, total.ballsFaced)]];
+    ['Fours / Sixes', total.fours + ' / ' + total.sixes], ['Strike rate', strikeRate(total.rateRuns, total.rateBalls)]];
   const bowlingFigures: [string, string | number][] = [['Wickets', total.wickets], ['Overs', oversText(total.ballsBowled)],
     ['Best bowling', total.best ? total.best.wickets + '/' + total.best.runs_conceded : '—'],
     ['Economy', runsPerOver(total.conceded, total.ballsBowled)]];
@@ -279,11 +281,12 @@ function PlayerPage({ data }: { data: Tournament }) {
   return <div className="shell page"><BackLink to={team ? '/teams/' + team.id : '/teams'}>{team?.name ?? 'All teams'}</BackLink><div className="profile-heading"><Avatar player={player} /><PageTitle kicker={player.role || 'Player'} title={player.name}><div className="detail-meta">{team && <SiteLink to={'/teams/' + team.id}>{team.name}</SiteLink>}{player.batch && <span>Batch {player.batch}</span>}</div></PageTitle></div>
     <GraphicCard key={player.id} name={player.name} kind="Player" render={() => renderPlayerCard(player, data.season?.name ?? '', team)} />
     <div className="section-heading"><h2>{data.season?.name ?? 'Season'} stats</h2>{rows.length > 0 && <span className="stats-matches">{total.played} {total.played === 1 ? 'match' : 'matches'}</span>}</div>
+    {rows.some(row => row.unrecorded?.length) && <p className="updated">Some paper scorecard details are unrecorded. Totals include available figures; strike rates use complete innings only.</p>}
     {rows.length ? <div className="two-col player-stats">
       <section className="panel padded"><h2>Batting</h2>
         {batting.length ? <><StatFigures figures={battingFigures} /><div className="table-wrap">
           <table><thead><tr><th>Match</th><th>Runs</th><th>Balls</th><th>4s</th><th>6s</th></tr></thead><tbody>{batting.map(row =>
-            <tr key={row.id}><td>{matchLink(row)}</td><td>{row.runs}{row.not_out ? '*' : ''}</td><td>{row.balls_faced}</td><td>{row.fours}</td><td>{row.sixes}</td></tr>)}</tbody></table>
+            <tr key={row.id}><td>{matchLink(row)}</td><td>{row.runs}{row.not_out ? '*' : ''}</td><td>{statValue(row, 'balls_faced')}</td><td>{statValue(row, 'fours')}</td><td>{statValue(row, 'sixes')}</td></tr>)}</tbody></table>
         </div></> : <p className="stats-matches">No batting innings yet.</p>}
       </section>
       <section className="panel padded"><h2>Bowling</h2>
@@ -322,16 +325,17 @@ function TournamentStats({ data }: { data: Tournament }) {
   const mostRuns = players.filter(row => row.runs > 0).sort((a, b) => b.runs - a.runs || byName(a, b));
   const mostWickets = players.filter(row => row.wickets > 0).sort((a, b) => b.wickets - a.wickets || byName(a, b));
   const minimumStrikeRateBalls = 10;
-  const highestStrikeRate = players.filter(row => row.ballsFaced >= minimumStrikeRateBalls)
-    .sort((a, b) => b.runs * a.ballsFaced - a.runs * b.ballsFaced || byName(a, b));
+  const highestStrikeRate = players.filter(row => row.rateBalls >= minimumStrikeRateBalls)
+    .sort((a, b) => b.rateRuns * a.rateBalls - a.rateRuns * b.rateBalls || byName(a, b));
 
   return <>
+    {data.matches.some(match => match.scorecard?.entryMode === 'summary') && <p className="updated">Rankings include available paper scorecard figures. Strike rates use only innings with recorded balls faced.</p>}
     <div className="tournament-boundaries"><StatFigures figures={[[ 'Tournament fours', totals.fours], ['Tournament sixes', totals.sixes]]} /></div>
     <div className="tournament-leaders">
       {[
         { title: 'Most runs', rows: mostRuns, value: (row: typeof players[number]) => row.runs },
         { title: 'Most wickets', rows: mostWickets, value: (row: typeof players[number]) => row.wickets },
-        { title: 'Highest strike rate', rows: highestStrikeRate, value: (row: typeof players[number]) => strikeRate(row.runs, row.ballsFaced),
+        { title: 'Highest strike rate', rows: highestStrikeRate, value: (row: typeof players[number]) => strikeRate(row.rateRuns, row.rateBalls),
           qualification: `Minimum ${minimumStrikeRateBalls} balls faced` },
       ].map(({ title, rows, value, qualification }) => <section className="panel padded" key={title}>
         <h2>{title}</h2>

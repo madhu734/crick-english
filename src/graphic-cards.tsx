@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { statValue } from './recorded-stats';
 import { Download, Image as ImageIcon } from 'lucide-react';
 import { fileUrl, oversText, stageLabel, type Match, type Player, type PlayerStat, type Team } from './data';
 import { teamLogoBackground, teamLogoFrame } from './team-logo';
@@ -320,7 +321,7 @@ export async function renderResultCard({ match, season, teams, players, stats, a
         rows.forEach((row, rank) => {
           const y = top + 86 + 42 * rank;
           const figures = offset === 0
-            ? `${row.runs}${row.not_out ? '*' : ''} (${row.balls_faced})`
+            ? `${row.runs}${row.not_out ? '*' : ''} (${statValue(row, 'balls_faced')})`
             : `${row.wickets}/${row.runs_conceded} (${oversText(row.balls_bowled)})`;
           words(ctx, playerNames.get(row.player) ?? 'Player', x + 25, y, 292, 32, ink, true);
           ctx.textAlign = 'right';
