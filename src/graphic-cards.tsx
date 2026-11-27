@@ -308,8 +308,8 @@ export async function renderResultCard({ match, season, teams, players, stats, a
       const x = 54 + index * 495;
       box(ctx, x, figuresTop, 477, 328, 18, paper);
       const headings = [
-        { title: 'TOP BATTERS', columns: 'RUNS (BALLS)', rows: side.batters, offset: 0 },
-        { title: 'TOP BOWLERS', columns: 'W/R (OV)', rows: side.bowlers, offset: 154 },
+        { title: match.scorecard?.entryMode === 'summary' ? 'RECORDED BATTERS' : 'TOP BATTERS', columns: 'RUNS (BALLS)', rows: side.batters, offset: 0 },
+        { title: match.scorecard?.entryMode === 'summary' ? 'RECORDED BOWLERS' : 'TOP BOWLERS', columns: 'W/R (OV)', rows: side.bowlers, offset: 154 },
       ];
       for (const { title, columns, rows, offset } of headings) {
         const top = figuresTop + offset;
